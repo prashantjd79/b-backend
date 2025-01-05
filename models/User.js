@@ -124,7 +124,14 @@ const userSchema = new mongoose.Schema(
         year: { type: Number },
       },
     ],
-
+    batchAssignments: [
+      {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Batch', // Reference the Batch model
+      },
+  ],
+  
+    timeAvailability: { type: String, default: 'Not Set' }, // Mentor's time availability
     // Mentor-specific fields
     assignedCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }], // Reference to assigned courses
     assignedBatches: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Batch' }], // Reference to assigned batches

@@ -799,9 +799,28 @@ exports.getBatches = async (req, res) => {
 //   }
 // };
 // Create Mentor
+
+
 exports.createMentor = async (req, res) => {
   try {
-    const { name, username, dob, email, contactNumber, photo, about, address, education, assignedCourses, assignedBatches, password } = req.body;
+    const {
+      name,
+      username,
+      dob,
+      email,
+      contactNumber,
+      photo,
+      about,
+      address,
+      education,
+      assignedCourses,
+      batchAssignments,
+      timeAvailability, // Added field
+      password, // For mentor password
+    } = req.body;
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     const mentor = new User({
       name,
@@ -814,18 +833,24 @@ exports.createMentor = async (req, res) => {
       address,
       education,
       assignedCourses,
-      assignedBatches,
-      role: 'Mentor',
-      password,
+      batchAssignments: batchAssignments || [], // Ensure batchAssignments is always an array
+      timeAvailability: timeAvailability || "Not Set", // Default if not provided
+      password: hashedPassword,
+      role: "Mentor", // Set the role explicitly
     });
 
     await mentor.save();
-    res.status(201).json({ message: 'Mentor created successfully', mentor });
+
+    res.status(201).json({
+      message: "Mentor created successfully",
+      mentor,
+    });
   } catch (error) {
-    console.error('Error creating mentor:', error.message);
-    res.status(500).json({ message: 'Error creating mentor', error: error.message });
+    console.error("Error creating mentor:", error.message);
+    res.status(500).json({ message: "Error creating mentor", error: error.message });
   }
 };
+
 
 // Get All Mentors
 exports.getMentors = async (req, res) => {
