@@ -60,7 +60,7 @@ app.use('/support',supportRoutes)
 app.use('/api/paths', pathRoutes);
 // Welcome route
 app.get('/', (req, res) => {
-  res.send('Welcome to the backend API');
+  res.send('Welcome to the backendd API');
 });
 
 // MongoDB Connection
