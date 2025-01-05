@@ -32,8 +32,8 @@ router.get('/courses', protect(['Admin','Mentor']), adminController.getCourses);
 
 
 
-router.post('/create-mentor', protect(['Admin']), adminController.createMentor);
-router.get('/mentor',protect(['Admin',]),adminController.getMentors);
+// router.post('/create-mentor', protect(['Admin']), adminController.createMentor);
+// router.get('/mentor',protect(['Admin',]),adminController.getMentors);
 
 // creating Batch
 router.post('/create-batch', protect(['Admin']), adminController.createBatch);
@@ -80,6 +80,11 @@ router.put('/update-manager/:id', protect(['Admin']), adminController.updateMana
 
 // Delete Manager
 router.delete('/delete-manager/:id', protect(['Admin']), adminController.deleteManager);
+
+router.post("/create-mentor", protect(["Admin"]), adminController.createMentor);
+router.get("/mentors", protect(["Admin"]),adminController.getMentors);
+router.put("/update-mentor/:id", protect(["Admin"]),adminController.updateMentor);
+router.delete("/delete-mentor/:id", protect(["Admin"]),adminController.deleteMentor);
 
 
 module.exports = router;

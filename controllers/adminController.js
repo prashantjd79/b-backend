@@ -20,7 +20,7 @@ const PromoCode = require('../models/PromoCode');
 
 
 const Manager = require('../models/User');
-
+const Mentor=require('../models/User');
 
 exports.deleteManager = async (req, res) => {
   try {
@@ -328,53 +328,35 @@ exports.createBatch = async (req, res) => {
 };
 
 
-
 // exports.createMentor = async (req, res) => {
 //   try {
-//     const { name, email, password, skills } = req.body;
+//     const { name, email, password } = req.body;
 
-//     // Ensure the role is 'Mentor'
-//     const role = 'Mentor';
+//     // Check if the user already exists
+//     const existingUser = await User.findOne({ email });
+//     if (existingUser) {
+//       return res.status(400).json({ message: 'Mentor already exists' });
+//     }
 
-//     const mentor = new User({ name, email, password, role, skills });
-//     await mentor.save();
+//     // Hash the password before saving
+//     const hashedPassword = await bcrypt.hash(password, 10);
 
-//     res.status(201).json({ message: 'Mentor created successfully', mentor });
+//     // Create the mentor account
+//     const newMentor = new User({
+//       name,
+//       email,
+//       password: hashedPassword,
+//       role: 'Mentor', // Assign the Mentor role
+//     });
+
+//     await newMentor.save();
+
+//     res.status(201).json({ message: 'Mentor created successfully', mentor: newMentor });
 //   } catch (error) {
-//     res.status(500).json({ error: 'Error creating mentor', details: error.message });
+//     console.error('Error creating mentor:', error.message);
+//     res.status(500).json({ message: 'Server error: Unable to create mentor' });
 //   }
 // };
-
-
-exports.createMentor = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-
-    // Check if the user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'Mentor already exists' });
-    }
-
-    // Hash the password before saving
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create the mentor account
-    const newMentor = new User({
-      name,
-      email,
-      password: hashedPassword,
-      role: 'Mentor', // Assign the Mentor role
-    });
-
-    await newMentor.save();
-
-    res.status(201).json({ message: 'Mentor created successfully', mentor: newMentor });
-  } catch (error) {
-    console.error('Error creating mentor:', error.message);
-    res.status(500).json({ message: 'Server error: Unable to create mentor' });
-  }
-};
 
 exports.assignCourse = async (req, res) => {
   try {
@@ -802,21 +784,95 @@ exports.getBatches = async (req, res) => {
   }
 };
 
-exports.getMentors = async (req, res) => {
+// exports.getMentors = async (req, res) => {
+//   try {
+//     // Fetch all users with role Mentor
+//     const mentors = await User.find({ role: 'Mentor' }).select('_id name email role');
+
+//     if (!mentors || mentors.length === 0) {
+//       return res.status(404).json({ message: 'No mentors found' });
+//     }
+
+//     res.status(200).json({ mentors });
+//   } catch (error) {
+//     console.error('Error fetching mentors:', error.message);
+//     res.status(500).json({ message: 'Error fetching mentors' });
+//   }
+// };
+// Create Mentor
+exports.createMentor = async (req, res) => {
   try {
-    // Fetch all users with role Mentor
-    const mentors = await User.find({ role: 'Mentor' }).select('_id name email role');
+    const { name, username, dob, email, contactNumber, photo, about, address, education, assignedCourses, assignedBatches, password } = req.body;
 
-    if (!mentors || mentors.length === 0) {
-      return res.status(404).json({ message: 'No mentors found' });
-    }
+    const mentor = new User({
+      name,
+      username,
+      dob,
+      email,
+      contactNumber,
+      photo,
+      about,
+      address,
+      education,
+      assignedCourses,
+      assignedBatches,
+      role: 'Mentor',
+      password,
+    });
 
-    res.status(200).json({ mentors });
+    await mentor.save();
+    res.status(201).json({ message: 'Mentor created successfully', mentor });
   } catch (error) {
-    console.error('Error fetching mentors:', error.message);
-    res.status(500).json({ message: 'Error fetching mentors' });
+    console.error('Error creating mentor:', error.message);
+    res.status(500).json({ message: 'Error creating mentor', error: error.message });
   }
 };
+
+// Get All Mentors
+exports.getMentors = async (req, res) => {
+  try {
+    const mentors = await User.find({ role: 'Mentor' }, '-password');
+    res.status(200).json({ message: 'Mentors fetched successfully', mentors });
+  } catch (error) {
+    console.error('Error fetching mentors:', error.message);
+    res.status(500).json({ message: 'Error fetching mentors', error: error.message });
+  }
+};
+
+// Update Mentor
+exports.updateMentor = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, username, dob, contactNumber, photo, about, address, education, assignedCourses, assignedBatches } = req.body;
+
+    const updatedMentor = await User.findByIdAndUpdate(
+      id,
+      { name, username, dob, contactNumber, photo, about, address, education, assignedCourses, assignedBatches },
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json({ message: 'Mentor updated successfully', updatedMentor });
+  } catch (error) {
+    console.error('Error updating mentor:', error.message);
+    res.status(500).json({ message: 'Error updating mentor', error: error.message });
+  }
+};
+
+// Delete Mentor
+exports.deleteMentor = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await User.findByIdAndDelete(id);
+    res.status(200).json({ message: 'Mentor deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting mentor:', error.message);
+    res.status(500).json({ message: 'Error deleting mentor', error: error.message });
+  }
+};
+
+
+
 exports.getStudents = async (req, res) => {
   try {
     // Fetch all users with role Student
