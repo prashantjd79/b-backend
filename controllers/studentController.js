@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Batch = require('../models/Batch');
 const Job=require('../models/Job');
 const PromoCode = require('../models/PromoCode');
+const Transaction = require('../models/Transaction');
 
 exports.enrollInCourse = async (req, res) => {
   try {
@@ -374,3 +375,35 @@ exports.getBatchDetails = async (req, res) => {
 
 // View all their created jobs.
 // View applications for a specific job.
+exports.getStudentTransactions = async (req, res) => {
+  try {
+    const studentId = req.user.id; // Logged-in student ID
+
+    if (!studentId) {
+      return res.status(400).json({ error: 'Student ID is required.' });
+    }
+
+    console.log("Logged-in user ID:", studentId); // Debug log
+
+    const transactions = await Transaction.find({ userId: studentId })
+      .populate('courseId', 'title') // Populate course details
+      .populate('batchId', 'name') // Populate batch details
+      .sort({ paymentDate: -1 });
+
+    console.log("Fetched Transactions:", transactions); // Debug log
+
+    if (!transactions.length) {
+      return res
+        .status(404)
+        .json({ message: 'No transactions found for this student.' });
+    }
+
+    res.status(200).json({
+      message: 'Transactions fetched successfully.',
+      transactions,
+    });
+  } catch (error) {
+    console.error('Error fetching student transactions:', error.message);
+    res.status(500).json({ error: 'Error fetching student transactions.' });
+  }
+};

@@ -1,5 +1,4 @@
 
-
 const User = require('../models/User');
 const Course = require('../models/Course');
 const jwt = require('jsonwebtoken');
@@ -7,21 +6,13 @@ const Batch = require('../models/Batch');
 const Blog = require('../models/Blog');
 const bcrypt=require('bcrypt');
 const Announcement = require('../models/Announcement'); // Adjust the path as needed
-
-
-
 const Transaction = require('../models/Transaction');
 const { Parser } = require('json2csv');
-
 const Category = require('../models/Category');
 const Subcategory = require('../models/Subcategory');
-
 const PromoCode = require('../models/PromoCode');
-
-
 const Manager = require('../models/User');
 const Mentor=require('../models/User');
-
 exports.deleteManager = async (req, res) => {
   try {
     const { id } = req.params;
@@ -37,7 +28,6 @@ exports.deleteManager = async (req, res) => {
     res.status(500).json({ error: 'Error deleting manager' });
   }
 };
-
 exports.updateManager = async (req, res) => {
   try {
     const { id } = req.params;
@@ -84,8 +74,6 @@ exports.updateManager = async (req, res) => {
     res.status(500).json({ error: "Error updating manager" });
   }
 };
-
-
 exports.getManagers = async (req, res) => {
   try {
     const managers = await User.find({ role: "Manager" }, "-resume -education"); // Exclude these fields
@@ -99,8 +87,6 @@ exports.getManagers = async (req, res) => {
     res.status(500).json({ error: "Error fetching managers" });
   }
 };
-
-
 exports.createManager = async (req, res) => {
   try {
     const {
@@ -154,14 +140,6 @@ exports.createManager = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
-
-
-
-
-
-
-
-
 exports.createUser = async (req, res) => {
   try {
     console.log('Request Body:', req.body); // Debug log
@@ -180,9 +158,6 @@ exports.createUser = async (req, res) => {
     res.status(500).json({ error: 'Error creating user' });
   }
 };
-
-
-
 // Create a new course
 // exports.createCourse = async (req, res) => {
 //   try {
@@ -203,8 +178,6 @@ exports.createUser = async (req, res) => {
 //     res.status(500).json({ error: 'An error occurred while creating the course' });
 //   }
 // };
-
-
 exports.createCourse = async (req, res) => {
   try {
     const { title, description, price, categoryId, subcategoryId } = req.body;
@@ -231,8 +204,6 @@ exports.createCourse = async (req, res) => {
     res.status(500).json({ error: 'Error creating course' });
   }
 };
-
-
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -268,8 +239,6 @@ exports.login = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
-
-// Approve a blog
 exports.approveBlog = async (req, res) => {
   try {
     // Example: Approve blog logic
@@ -284,9 +253,6 @@ exports.approveBlog = async (req, res) => {
     res.status(500).json({ error: 'Error approving blog' });
   }
 };
-
-// View analytics
-
 exports.getAnalytics = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
@@ -311,9 +277,6 @@ exports.getAnalytics = async (req, res) => {
     res.status(500).json({ message: 'Error fetching analytics data' });
   }
 };
-
-
-
 exports.createBatch = async (req, res) => {
   try {
     const { courseId, name, startDate, endDate, mentor } = req.body;
@@ -326,8 +289,6 @@ exports.createBatch = async (req, res) => {
     res.status(500).json({ error: 'Error creating batch', details: error.message });
   }
 };
-
-
 // exports.createMentor = async (req, res) => {
 //   try {
 //     const { name, email, password } = req.body;
@@ -357,7 +318,6 @@ exports.createBatch = async (req, res) => {
 //     res.status(500).json({ message: 'Server error: Unable to create mentor' });
 //   }
 // };
-
 exports.assignCourse = async (req, res) => {
   try {
     const { userId, courseId } = req.body;
@@ -403,8 +363,6 @@ exports.assignCourse = async (req, res) => {
     res.status(500).json({ message: 'Server error: Unable to assign course' });
   }
 };
-
-
 exports.assignMentorToBatch = async (req, res) => {
   try {
     const { batchId, mentorId } = req.body;
@@ -439,8 +397,6 @@ exports.assignMentorToBatch = async (req, res) => {
     res.status(500).json({ message: 'Server error: Unable to assign mentor' });
   }
 };
-
-
 exports.assignStudents = async (req, res) => {
   try {
     const { batchId, studentIds } = req.body;
@@ -456,8 +412,6 @@ exports.assignStudents = async (req, res) => {
     res.status(500).json({ error: 'Error assigning students' });
   }
 };
-
-
 exports.approveBlog = async (req, res) => {
   try {
     const { blogId, status } = req.body;
@@ -473,8 +427,6 @@ exports.approveBlog = async (req, res) => {
     res.status(500).json({ error: 'Error updating blog status' });
   }
 };
-
-
 exports.getPendingBlogs = async (req, res) => {
   try {
     const blogs = await Blog.find({ status: 'Pending' }).populate('creatorId', 'name email');
@@ -483,9 +435,6 @@ exports.getPendingBlogs = async (req, res) => {
     res.status(500).json({ error: 'Error fetching blogs' });
   }
 };
-
-
-
 exports.getAnalytics = async (req, res) => {
   try {
     const totalUsers = await User.aggregate([
@@ -507,12 +456,6 @@ exports.getAnalytics = async (req, res) => {
     res.status(500).json({ error: 'Error fetching analytics' });
   }
 };
-
-
-
-
-
-
 // exports.exportTransactions = async (req, res) => {
 //   try {
 //     const { courseId, category, subcategory } = req.query;
@@ -537,67 +480,27 @@ exports.getAnalytics = async (req, res) => {
 
 // Create Category
 // Adjust the path as needed
-
-
-exports.exportTransactions = async (req, res) => {
+exports.getTransactions = async (req, res) => {
   try {
-    const { courseId, category, subcategory } = req.query;
+    const { role } = req.query; // Optional query to filter by user role
 
-    // Build the query dynamically based on filters
     const query = {};
-    if (courseId) query.courseId = courseId;
-    if (category) query.category = category;
-    if (subcategory) query.subcategory = subcategory;
-
-    console.log('Query:', query); // Log the query for debugging
-
-    // Fetch transactions and populate necessary fields
-    const transactions = await Transaction.find(query)
-      .populate({
-        path: 'studentId',
-        select: 'name email', // Only fetch necessary fields from User
-      })
-      .populate({
-        path: 'courseId',
-        select: 'title', // Only fetch course title
-      });
-
-    console.log('Transactions:', transactions); // Log transactions for debugging
-
-    // Check if transactions exist
-    if (!transactions || transactions.length === 0) {
-      return res.status(404).json({ message: 'No transactions found for the given filters.' });
+    if (role) {
+      const users = await User.find({ role }, '_id'); // Fetch users with the specified role
+      const userIds = users.map((user) => user._id);
+      query.userId = { $in: userIds };
     }
 
-    // Define fields for CSV
-    const fields = [
-      {
-        label: 'Student Name',
-        value: (row) => (row.studentId ? row.studentId.name : 'N/A'), // Handle missing data
-      },
-      {
-        label: 'Student Email',
-        value: (row) => (row.studentId ? row.studentId.email : 'N/A'), // Handle missing data
-      },
-      {
-        label: 'Course Title',
-        value: (row) => (row.courseId ? row.courseId.title : 'N/A'), // Handle missing data
-      },
-      { label: 'Amount', value: 'amount' },
-      { label: 'Payment Date', value: 'paymentDate' },
-    ];
+    const transactions = await Transaction.find(query)
+      .populate('userId', 'name email role') // Populate user details
+      .populate('courseId', 'title') // Populate course details
+      .populate('batchId', 'name') // Populate batch details
+      .sort({ paymentDate: -1 }); // Sort by latest payment
 
-    // Create CSV file
-    const json2csvParser = new Parser({ fields });
-    const csv = json2csvParser.parse(transactions);
-
-    // Set response headers and send the CSV
-    res.header('Content-Type', 'text/csv');
-    res.attachment('transactions.csv');
-    return res.send(csv);
+    res.status(200).json({ message: 'Transactions fetched successfully.', transactions });
   } catch (error) {
-    console.error('Error exporting transactions:', error.message);
-    res.status(500).json({ error: 'Error exporting transactions' });
+    console.error('Error fetching transactions:', error.message);
+    res.status(500).json({ error: 'Error fetching transactions.' });
   }
 };
 
@@ -613,8 +516,6 @@ exports.createCategory = async (req, res) => {
     res.status(500).json({ error: 'Error creating category' });
   }
 };
-
-// Create Subcategory
 exports.createSubcategory = async (req, res) => {
   try {
     const { name, categoryId } = req.body;
@@ -632,59 +533,80 @@ exports.createSubcategory = async (req, res) => {
     res.status(500).json({ error: 'Error creating subcategory' });
   }
 };
-
-
 exports.createPromoCode = async (req, res) => {
   try {
-    const { code, discountPercentage, expiryDate, usageLimit, courseId } = req.body;
+    const { code, discountPercentage, expiryDate, applicableTo, usageLimit, category } = req.body;
 
-    let discountedPrice = null;
-
-    // Fetch course price if courseId is provided
-    if (courseId) {
-      const course = await Course.findById(courseId);
-      if (!course) {
-        return res.status(404).json({ message: 'Course not found' });
-      }
-      discountedPrice = course.price - (course.price * discountPercentage) / 100;
-    }
-
-    // Create the promo code
-    const promo = new PromoCode({
+    const promoCode = new PromoCode({
       code,
       discountPercentage,
       expiryDate,
+      applicableTo,
       usageLimit,
-      courseId: courseId || null,
+      category: applicableTo === 'Category' ? category : null,
     });
 
-    await promo.save();
+    await promoCode.save();
 
-    res.status(201).json({
-      message: 'Promo code created successfully',
-      promo,
-      ...(courseId && { originalPrice: discountedPrice ? discountedPrice / (1 - discountPercentage / 100) : null }), // Original Price
-      ...(discountedPrice && { discountedPrice }), // New Price After Discount
-    });
+    res.status(201).json({ message: 'Promo Code created successfully.', promoCode });
   } catch (error) {
-    res.status(500).json({ error: 'Error creating promo code' });
+    console.error('Error creating promo code:', error.message);
+    res.status(500).json({ error: 'Error creating promo code.' });
   }
 };
-
 exports.getPromoCodes = async (req, res) => {
   try {
-    const { courseId } = req.query;
-
-    const query = {};
-    if (courseId) query.courseId = courseId;
-
-    const promoCodes = await PromoCode.find(query).populate('courseId');
-    res.status(200).json({ message: 'Promo codes retrieved successfully', promoCodes });
+    const promoCodes = await PromoCode.find().populate('category');
+    res.status(200).json({ message: 'Promo Codes fetched successfully.', promoCodes });
   } catch (error) {
-    res.status(500).json({ error: 'Error retrieving promo codes' });
+    console.error('Error fetching promo codes:', error.message);
+    res.status(500).json({ error: 'Error fetching promo codes.' });
   }
 };
+exports.updatePromoCode = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { code, discountPercentage, expiryDate, applicableTo, usageLimit, category } = req.body;
 
+    const updatedPromoCode = await PromoCode.findByIdAndUpdate(
+      id,
+      {
+        code,
+        discountPercentage,
+        expiryDate,
+        applicableTo,
+        usageLimit,
+        category: applicableTo === 'Category' ? category : null,
+      },
+      { new: true }
+    );
+
+    if (!updatedPromoCode) {
+      return res.status(404).json({ message: 'Promo Code not found.' });
+    }
+
+    res.status(200).json({ message: 'Promo Code updated successfully.', updatedPromoCode });
+  } catch (error) {
+    console.error('Error updating promo code:', error.message);
+    res.status(500).json({ error: 'Error updating promo code.' });
+  }
+};
+exports.deletePromoCode = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedPromoCode = await PromoCode.findByIdAndDelete(id);
+
+    if (!deletedPromoCode) {
+      return res.status(404).json({ message: 'Promo Code not found.' });
+    }
+
+    res.status(200).json({ message: 'Promo Code deleted successfully.' });
+  } catch (error) {
+    console.error('Error deleting promo code:', error.message);
+    res.status(500).json({ error: 'Error deleting promo code.' });
+  }
+};
 exports.getCategories = async (req, res) => {
   try {
     const categories = await Category.find();
@@ -693,8 +615,6 @@ exports.getCategories = async (req, res) => {
     res.status(500).json({ error: 'Error fetching categories' });
   }
 };
-
-
 exports.getSubcategories = async (req, res) => {
   try {
     const { categoryId } = req.query;
@@ -705,7 +625,6 @@ exports.getSubcategories = async (req, res) => {
     res.status(500).json({ error: 'Error fetching subcategories' });
   }
 };
-
 exports.getCourses = async (req, res) => {
   try {
     const courses = await Course.find({})
@@ -722,10 +641,6 @@ exports.getCourses = async (req, res) => {
     res.status(500).json({ message: 'Error fetching courses', error: error.message });
   }
 };
-
-
-
-
 // exports.getCourses = async (req, res) => {
 //   try {
 //     const courses = await Course.find({}, 'title _id'); // Fetch only title and _id
@@ -782,7 +697,6 @@ exports.getBatches = async (req, res) => {
     res.status(500).json({ message: 'Error fetching batches' });
   }
 };
-
 // exports.getMentors = async (req, res) => {
 //   try {
 //     // Fetch all users with role Mentor
@@ -799,7 +713,6 @@ exports.getBatches = async (req, res) => {
 //   }
 // };
 // Create Mentor
-
 
 exports.createMentor = async (req, res) => {
   try {
@@ -850,9 +763,6 @@ exports.createMentor = async (req, res) => {
     res.status(500).json({ message: "Error creating mentor", error: error.message });
   }
 };
-
-
-// Get All Mentors
 exports.getMentors = async (req, res) => {
   try {
     const mentors = await User.find({ role: 'Mentor' }, '-password');
@@ -862,8 +772,6 @@ exports.getMentors = async (req, res) => {
     res.status(500).json({ message: 'Error fetching mentors', error: error.message });
   }
 };
-
-// Update Mentor
 exports.updateMentor = async (req, res) => {
   try {
     const { id } = req.params;
@@ -881,8 +789,6 @@ exports.updateMentor = async (req, res) => {
     res.status(500).json({ message: 'Error updating mentor', error: error.message });
   }
 };
-
-// Delete Mentor
 exports.deleteMentor = async (req, res) => {
   try {
     const { id } = req.params;
@@ -894,9 +800,6 @@ exports.deleteMentor = async (req, res) => {
     res.status(500).json({ message: 'Error deleting mentor', error: error.message });
   }
 };
-
-
-
 exports.getStudents = async (req, res) => {
   try {
     // Fetch all users with role Student
@@ -912,34 +815,39 @@ exports.getStudents = async (req, res) => {
     res.status(500).json({ message: 'Error fetching students' });
   }
 };
-
-
-
 exports.simulateTransaction = async (req, res) => {
   try {
-    const { studentId, courseId, amount, paymentMethod } = req.body;
+    const { studentId, courseId, amountPaid, paymentMethod } = req.body;
 
-    if (!studentId || !courseId) {
-      return res.status(400).json({ message: 'Student ID and Course ID are required' });
+    // Validate required fields
+    if (!studentId || !courseId || !amountPaid) {
+      return res.status(400).json({ message: 'Student ID, Course ID, and Amount Paid are required.' });
     }
 
+    // Generate a unique transaction ID
+    const transactionId = `${Date.now()}`;
+
+    // Create a new transaction
     const transaction = new Transaction({
-      transactionId: `T${Date.now()}`, // Generate a unique transaction ID
-      amount,
+      transactionId,
+      userId: studentId,
+      courseId,
+      amountPaid,
       paymentMethod: paymentMethod || 'Credit Card',
       status: 'Success',
-      studentId,
-      courseId,
       paymentDate: new Date(),
     });
 
+    // Save the transaction
     await transaction.save();
+
     res.status(201).json({ message: 'Transaction simulated successfully', transaction });
   } catch (error) {
     console.error('Error simulating transaction:', error.message);
     res.status(500).json({ error: 'Error simulating transaction' });
   }
 };
+
 // exports.addAnnouncement = async (req, res) => {
 //   try {
 //     const { title, message, targetRoles } = req.body;
@@ -963,52 +871,365 @@ exports.simulateTransaction = async (req, res) => {
 //     res.status(500).json({ error: 'Error creating announcement' });
 //   }
 // };
-
-exports.addAnnouncement = async (req, res) => {
+exports.createAnnouncement = async (req, res) => {
   try {
-    const { title, message, targetRoles } = req.body;
-
-    if (!title || !message || !targetRoles) {
-      return res.status(400).json({ message: 'Title, message, and target roles are required.' });
-    }
+    const { title, message, media, targetAudience, visibilityStart, visibilityEnd } = req.body;
 
     const announcement = new Announcement({
       title,
       message,
-      targetRoles,
-      createdBy: req.user.id, // Ensure admin ID is added to the announcement
+      media,
+      targetAudience,
+      visibilityStart,
+      visibilityEnd,
+      createdBy: req.user.id, // Admin ID
     });
 
     await announcement.save();
 
-    res.status(201).json({
-      message: 'Announcement created successfully',
-      announcement: {
-        title: announcement.title,
-        message: announcement.message,
-        targetRoles: announcement.targetRoles,
-        createdBy: announcement.createdBy,
-        createdAt: announcement.createdAt, // Include createdAt in the response
-      },
-    });
+    res.status(201).json({ message: 'Announcement created successfully.', announcement });
   } catch (error) {
     console.error('Error creating announcement:', error.message);
-    res.status(500).json({ error: 'Error creating announcement' });
+    res.status(500).json({ error: 'Error creating announcement.' });
   }
 };
-
-
-
 exports.getAnnouncements = async (req, res) => {
   try {
-    const announcements = await Announcement.find();
-    res.status(200).json({
-      message: 'Announcements fetched successfully',
-      announcements,
-    });
+    const announcements = await Announcement.find()
+      .populate('createdBy', 'name email') // Populate admin details
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ message: 'Announcements fetched successfully.', announcements });
   } catch (error) {
     console.error('Error fetching announcements:', error.message);
-    res.status(500).json({ message: 'Error fetching announcements' });
+    res.status(500).json({ error: 'Error fetching announcements.' });
+  }
+};
+exports.updateAnnouncement = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, message, media, targetAudience, visibilityStart, visibilityEnd } = req.body;
+
+    const updatedAnnouncement = await Announcement.findByIdAndUpdate(
+      id,
+      {
+        title,
+        message,
+        media,
+        targetAudience,
+        visibilityStart,
+        visibilityEnd,
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedAnnouncement) {
+      return res.status(404).json({ message: 'Announcement not found.' });
+    }
+
+    res.status(200).json({ message: 'Announcement updated successfully.', updatedAnnouncement });
+  } catch (error) {
+    console.error('Error updating announcement:', error.message);
+    res.status(500).json({ error: 'Error updating announcement.' });
+  }
+};
+exports.deleteAnnouncement = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedAnnouncement = await Announcement.findByIdAndDelete(id);
+
+    if (!deletedAnnouncement) {
+      return res.status(404).json({ message: 'Announcement not found.' });
+    }
+
+    res.status(200).json({ message: 'Announcement deleted successfully.' });
+  } catch (error) {
+    console.error('Error deleting announcement:', error.message);
+    res.status(500).json({ error: 'Error deleting announcement.' });
+  }
+};
+exports.createCreator = async (req, res) => {
+  try {
+    const {
+      name,
+      dob,
+      username,
+      email,
+      contactNumber,
+      photo,
+      about,
+      address,
+      education,
+      skills,
+      assignedCourses,
+      assignedBatches,
+      password,
+    } = req.body;
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    const creator = new User({
+      name,
+      dob,
+      username,
+      email,
+      contactNumber,
+      photo,
+      about,
+      address,
+      education,
+      skills: skills || [],
+      assignedCourses: assignedCourses || [],
+      assignedBatches: assignedBatches || [],
+      password: hashedPassword,
+      role: 'Creator',
+    });
+
+    await creator.save();
+
+    res.status(201).json({
+      message: 'Creator created successfully',
+      creator,
+    });
+  } catch (error) {
+    console.error('Error creating creator:', error.message);
+    res.status(500).json({ message: 'Error creating creator', error: error.message });
+  }
+};
+exports.getCreators = async (req, res) => {
+  try {
+    const creators = await User.find({ role: 'Creator' }).populate('assignedCourses').populate('assignedBatches');
+    res.status(200).json({ message: 'Creators fetched successfully', creators });
+  } catch (error) {
+    console.error('Error fetching creators:', error.message);
+    res.status(500).json({ message: 'Error fetching creators', error: error.message });
+  }
+};
+exports.updateCreator = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    if (updateData.password) {
+      updateData.password = await bcrypt.hash(updateData.password, 12);
+    }
+
+    const updatedCreator = await User.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    }).populate('assignedCourses').populate('assignedBatches');
+
+    if (!updatedCreator) {
+      return res.status(404).json({ message: 'Creator not found' });
+    }
+
+    res.status(200).json({
+      message: 'Creator updated successfully',
+      updatedCreator,
+    });
+  } catch (error) {
+    console.error('Error updating creator:', error.message);
+    res.status(500).json({ message: 'Error updating creator', error: error.message });
+  }
+};
+exports.deleteCreator = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedCreator = await User.findByIdAndDelete(id);
+
+    if (!deletedCreator) {
+      return res.status(404).json({ message: 'Creator not found' });
+    }
+
+    res.status(200).json({ message: 'Creator deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting creator:', error.message);
+    res.status(500).json({ message: 'Error deleting creator', error: error.message });
+  }
+};
+exports.createStudent = async (req, res) => {
+  try {
+    const {
+      name,
+      dob,
+      email,
+      contactNumber,
+      photo,
+      guardianName,
+      address,
+      education,
+      coursesEnrolled,
+      interests,
+      languagesPreferred,
+      wannaBe,
+      experience,
+      batch,
+      roadmapEnrolled,
+      password,
+      resume,
+    } = req.body;
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    const student = new User({
+      name,
+      dob,
+      email,
+      contactNumber,
+      photo,
+      guardianName,
+      address,
+      education,
+      coursesEnrolled,
+      interests,
+      languagesPreferred,
+      wannaBe,
+      experience,
+      batch,
+      roadmapEnrolled,
+      resume,
+      role: 'Student',
+      password: hashedPassword,
+    });
+
+    await student.save();
+    res.status(201).json({ message: 'Student created successfully', student });
+  } catch (error) {
+    console.error('Error creating student:', error.message);
+    res.status(500).json({ error: 'Error creating student' });
+  }
+};
+exports.getStudents = async (req, res) => {
+  try {
+    const students = await User.find({ role: 'Student' }).populate([
+      'coursesEnrolled',
+      'batch',
+      'roadmapEnrolled',
+    ]);
+
+    res.status(200).json({ message: 'Students fetched successfully', students });
+  } catch (error) {
+    console.error('Error fetching students:', error.message);
+    res.status(500).json({ error: 'Error fetching students' });
+  }
+};
+exports.updateStudent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    const updatedStudent = await User.findByIdAndUpdate(
+      id,
+      { $set: updates },
+      { new: true }
+    ).populate(['coursesEnrolled', 'batch', 'roadmapEnrolled']);
+
+    if (!updatedStudent) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+
+    res.status(200).json({ message: 'Student updated successfully', updatedStudent });
+  } catch (error) {
+    console.error('Error updating student:', error.message);
+    res.status(500).json({ error: 'Error updating student' });
+  }
+};
+exports.deleteStudent = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedStudent = await User.findByIdAndDelete(id);
+
+    if (!deletedStudent) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+
+    res.status(200).json({ message: 'Student deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting student:', error.message);
+    res.status(500).json({ error: 'Error deleting student' });
+  }
+};
+exports.createEmployer = async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      password,
+      contactNumber,
+      photo,
+      industry,
+      address,
+      companySize,
+    } = req.body;
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    const employer = new User({
+      name,
+      email,
+      password: hashedPassword,
+      contactNumber,
+      photo,
+      industry,
+      address,
+      companySize,
+      role: 'Employer',
+    });
+
+    await employer.save();
+
+    res.status(201).json({ message: 'Employer created successfully', employer });
+  } catch (error) {
+    console.error('Error creating employer:', error.message);
+    res.status(500).json({ message: 'Error creating employer', error: error.message });
+  }
+};
+exports.updateEmployer = async (req, res) => {
+  try {
+    const employerId = req.params.id;
+    const updates = req.body;
+
+    const employer = await User.findByIdAndUpdate(employerId, updates, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!employer) {
+      return res.status(404).json({ message: 'Employer not found' });
+    }
+
+    res.status(200).json({ message: 'Employer updated successfully', employer });
+  } catch (error) {
+    console.error('Error updating employer:', error.message);
+    res.status(500).json({ message: 'Error updating employer', error: error.message });
+  }
+};
+exports.getEmployers = async (req, res) => {
+  try {
+    const employers = await User.find({ role: 'Employer' });
+    res.status(200).json({ message: 'Employers fetched successfully', employers });
+  } catch (error) {
+    console.error('Error fetching employers:', error.message);
+    res.status(500).json({ message: 'Error fetching employers', error: error.message });
+  }
+};
+exports.deleteEmployer = async (req, res) => {
+  try {
+    const employerId = req.params.id;
+
+    const employer = await User.findByIdAndDelete(employerId);
+
+    if (!employer) {
+      return res.status(404).json({ message: 'Employer not found' });
+    }
+
+    res.status(200).json({ message: 'Employer deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting employer:', error.message);
+    res.status(500).json({ message: 'Error deleting employer', error: error.message });
   }
 };
 

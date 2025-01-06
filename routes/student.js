@@ -19,6 +19,7 @@ router.post('/apply-promo', protect(['Student']), studentController.applyPromoCo
 router.get('/courses',protect(['Student']),studentController.getCourses);
  router.get('/batches', protect(['Student']), studentController.getStudentBatches);
 router.get('/batch/:batchId', protect(['Student']), studentController.getBatchDetails);
+router.get('/transactions', protect(['Student']), studentController.getStudentTransactions);
 
 
 
