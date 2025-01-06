@@ -10,13 +10,15 @@ router.put('/announcements/:id', protect(['Admin']), adminController.updateAnnou
 router.delete('/announcements/:id', protect(['Admin']),adminController.deleteAnnouncement);
 router.post('/create-user', protect(['Admin']), adminController.createUser);
 router.post('/create-course', protect(['Admin']), adminController.createCourse);
-router.get('/courses', protect(['Admin','Mentor']), adminController.getCourses);
-router.post('/create-batch', protect(['Admin']), adminController.createBatch);
+router.get('/courses', protect(['Admin']), adminController.getCourses);
+router.put('/update-course/:id', protect(['Admin']), adminController.updateCourse);
+router.delete('/delete-course/:id', protect(['Admin']), adminController.deleteCourse);
+//router.post('/create-batch', protect(['Admin']), adminController.createBatch);
 router.post('/assign-course', protect(['Admin']), adminController.assignCourse);
 router.get('/users', protect(['Admin']), adminController.getUsers);
 router.put('/assign-mentor', protect(['Admin']), adminController.assignMentorToBatch);
 router.put('/assign-students', protect(['Admin']), adminController.assignStudents);
-router.get('/batches', protect(['Admin','Mentor']), adminController.getBatches);
+//router.get('/batches', protect(['Admin','Mentor']), adminController.getBatches);
 router.put('/approve-blog', protect(['Admin']), adminController.approveBlog);
 router.get('/blogs', protect(['Admin']), adminController.getPendingBlogs);
 router.get('/analytics', protect(['Admin','Manager']), adminController.getAnalytics);
@@ -53,6 +55,11 @@ router.put('/update-employer/:id', protect(['Admin']), adminController.updateEmp
 router.get('/employers', protect(['Admin']), adminController.getEmployers);
 router.delete('/delete-employer/:id', protect(['Admin']), adminController.deleteEmployer);
 router.get('/transactions', protect(['Admin']), adminController.getTransactions);
+// Create a new batch
+router.post('/batch/create', protect(['Admin']), adminController.createBatch);
+router.get('/batch', protect(['Admin']), adminController.getBatches);
+router.put('/batch/update/:id', protect(['Admin']), adminController.updateBatch);
+router.delete('/batch/delete/:id', protect(['Admin']), adminController.deleteBatch);
 
 
 

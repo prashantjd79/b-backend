@@ -4,72 +4,97 @@ const Course = require('../models/Course');
 // Create a new Path
 exports.createPath = async (req, res) => {
   try {
-    const { name, description, courses } = req.body;
+    const { name, description, category, courses, roadmapSuggestions } = req.body;
 
     const path = new Path({
       name,
       description,
+      category,
       courses,
+      roadmapSuggestions,
     });
 
     await path.save();
-    res.status(201).json({ message: 'Path created successfully', path });
+
+    res.status(201).json({
+      message: 'Path created successfully',
+      path,
+    });
   } catch (error) {
+    console.error('Error creating path:', error.message);
     res.status(500).json({ error: 'Error creating path' });
   }
 };
 
+
+
 // Get all Paths
 exports.getPaths = async (req, res) => {
   try {
-    const paths = await Path.find().populate('courses', 'title description price');
-    res.status(200).json({ paths });
+    const paths = await Path.find()
+      .populate('category', 'name')
+      .populate('courses.courseId', 'title')
+      .populate('courses.batches.batchId', 'name');
+
+    res.status(200).json({
+      message: 'Paths fetched successfully',
+      paths,
+    });
   } catch (error) {
+    console.error('Error fetching paths:', error.message);
     res.status(500).json({ error: 'Error fetching paths' });
   }
 };
 
+
 // Get a specific Path by ID
-exports.getPathById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const path = await Path.findById(id).populate('courses', 'title description price');
-    if (!path) return res.status(404).json({ message: 'Path not found' });
-    res.status(200).json({ path });
-  } catch (error) {
-    res.status(500).json({ error: 'Error fetching path' });
-  }
-};
+
 
 // Update a Path
 exports.updatePath = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, courses } = req.body;
+    const updates = req.body;
 
-    const path = await Path.findByIdAndUpdate(
-      id,
-      { name, description, courses },
-      { new: true }
-    );
+    const updatedPath = await Path.findByIdAndUpdate(id, updates, { new: true })
+      .populate('category', 'name')
+      .populate('courses.courseId', 'title')
+      .populate('courses.batches.batchId', 'name');
 
-    if (!path) return res.status(404).json({ message: 'Path not found' });
-    res.status(200).json({ message: 'Path updated successfully', path });
+    if (!updatedPath) {
+      return res.status(404).json({ message: 'Path not found' });
+    }
+
+    res.status(200).json({
+      message: 'Path updated successfully',
+      updatedPath,
+    });
   } catch (error) {
+    console.error('Error updating path:', error.message);
     res.status(500).json({ error: 'Error updating path' });
   }
 };
+
 
 // Delete a Path
 exports.deletePath = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const path = await Path.findByIdAndDelete(id);
+    const deletedPath = await Path.findByIdAndDelete(id);
 
-    if (!path) return res.status(404).json({ message: 'Path not found' });
-    res.status(200).json({ message: 'Path deleted successfully' });
+    if (!deletedPath) {
+      return res.status(404).json({ message: 'Path not found' });
+    }
+
+    res.status(200).json({
+      message: 'Path deleted successfully',
+      deletedPath,
+    });
   } catch (error) {
+    console.error('Error deleting path:', error.message);
     res.status(500).json({ error: 'Error deleting path' });
   }
 };
+
+

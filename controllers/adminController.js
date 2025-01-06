@@ -180,30 +180,43 @@ exports.createUser = async (req, res) => {
 // };
 exports.createCourse = async (req, res) => {
   try {
-    const { title, description, price, categoryId, subcategoryId } = req.body;
-
-    // Verify Category and Subcategory existence
-    const category = await Category.findById(categoryId);
-    const subcategory = await Subcategory.findById(subcategoryId);
-
-    if (!category || !subcategory) {
-      return res.status(404).json({ message: 'Category or Subcategory not found' });
-    }
+    const {
+      name,
+      category,
+      subcategory,
+      description,
+      duration,
+      mentorAssigned,
+      managerAssigned,
+      batchesAvailable,
+      promoCodes,
+      realPrice,
+      discountedPrice,
+    } = req.body;
 
     const course = new Course({
-      title,
+      name,
+      category,
+      subcategory,
       description,
-      price,
-      categoryId,
-      subcategoryId,
+      duration,
+      mentorAssigned,
+      managerAssigned,
+      batchesAvailable,
+      promoCodes,
+      realPrice,
+      discountedPrice,
     });
 
     await course.save();
+
     res.status(201).json({ message: 'Course created successfully', course });
   } catch (error) {
+    console.error('Error creating course:', error.message);
     res.status(500).json({ error: 'Error creating course' });
   }
 };
+
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -279,16 +292,31 @@ exports.getAnalytics = async (req, res) => {
 };
 exports.createBatch = async (req, res) => {
   try {
-    const { courseId, name, startDate, endDate, mentor } = req.body;
+    const { name, courseId, startDate, endDate, students, mentors, managerAssigned, promoCodes } = req.body;
 
-    const batch = new Batch({ courseId, name, startDate, endDate, mentor });
+    const batch = new Batch({
+      name,
+      courseId,
+      startDate,
+      endDate,
+      students,
+      mentors,
+      managerAssigned,
+      promoCodes,
+    });
+
     await batch.save();
 
-    res.status(201).json({ message: 'Batch created successfully', batch });
+    res.status(201).json({
+      message: 'Batch created successfully',
+      batch,
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Error creating batch', details: error.message });
+    console.error('Error creating batch:', error.message);
+    res.status(500).json({ error: 'Error creating batch' });
   }
 };
+
 // exports.createMentor = async (req, res) => {
 //   try {
 //     const { name, email, password } = req.body;
@@ -625,22 +653,22 @@ exports.getSubcategories = async (req, res) => {
     res.status(500).json({ error: 'Error fetching subcategories' });
   }
 };
-exports.getCourses = async (req, res) => {
-  try {
-    const courses = await Course.find({})
-      .populate('categoryId', 'name')
-      .populate('subcategoryId', 'name')
-      .select('title price description categoryId subcategoryId');
+// exports.getCourses = async (req, res) => {
+//   try {
+//     const courses = await Course.find({})
+//       .populate('categoryId', 'name')
+//       .populate('subcategoryId', 'name')
+//       .select('title price description categoryId subcategoryId');
 
-    res.status(200).json({
-      message: 'Courses fetched successfully',
-      courses,
-    });
-  } catch (error) {
-    console.error('Error fetching courses:', error);
-    res.status(500).json({ message: 'Error fetching courses', error: error.message });
-  }
-};
+//     res.status(200).json({
+//       message: 'Courses fetched successfully',
+//       courses,
+//     });
+//   } catch (error) {
+//     console.error('Error fetching courses:', error);
+//     res.status(500).json({ message: 'Error fetching courses', error: error.message });
+//   }
+// };
 // exports.getCourses = async (req, res) => {
 //   try {
 //     const courses = await Course.find({}, 'title _id'); // Fetch only title and _id
@@ -686,17 +714,70 @@ exports.getUsers = async (req, res) => {
 exports.getBatches = async (req, res) => {
   try {
     const { courseId } = req.query;
-    const query = courseId ? { courseId } : {}; // Optional filter by courseId
-    const batches = await Batch.find(query).select('_id name');
-    if (!batches || batches.length === 0) {
-      return res.status(404).json({ message: 'No batches found' });
-    }
-    res.status(200).json({ batches });
+
+    const query = {};
+    if (courseId) query.courseId = courseId;
+
+    const batches = await Batch.find(query)
+      .populate('courseId', 'title')
+      .populate('students', 'name email')
+      .populate('mentors', 'name email')
+      .populate('managerAssigned', 'name email');
+
+    res.status(200).json({
+      message: 'Batches fetched successfully',
+      batches,
+    });
   } catch (error) {
     console.error('Error fetching batches:', error.message);
-    res.status(500).json({ message: 'Error fetching batches' });
+    res.status(500).json({ error: 'Error fetching batches' });
   }
 };
+
+exports.updateBatch = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    const updatedBatch = await Batch.findByIdAndUpdate(id, updates, { new: true })
+      .populate('courseId', 'title')
+      .populate('students', 'name email')
+      .populate('mentors', 'name email')
+      .populate('managerAssigned', 'name email');
+
+    if (!updatedBatch) {
+      return res.status(404).json({ message: 'Batch not found' });
+    }
+
+    res.status(200).json({
+      message: 'Batch updated successfully',
+      updatedBatch,
+    });
+  } catch (error) {
+    console.error('Error updating batch:', error.message);
+    res.status(500).json({ error: 'Error updating batch' });
+  }
+};
+exports.deleteBatch = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedBatch = await Batch.findByIdAndDelete(id);
+
+    if (!deletedBatch) {
+      return res.status(404).json({ message: 'Batch not found' });
+    }
+
+    res.status(200).json({
+      message: 'Batch deleted successfully',
+      deletedBatch,
+    });
+  } catch (error) {
+    console.error('Error deleting batch:', error.message);
+    res.status(500).json({ error: 'Error deleting batch' });
+  }
+};
+
 // exports.getMentors = async (req, res) => {
 //   try {
 //     // Fetch all users with role Mentor
@@ -1230,6 +1311,61 @@ exports.deleteEmployer = async (req, res) => {
   } catch (error) {
     console.error('Error deleting employer:', error.message);
     res.status(500).json({ message: 'Error deleting employer', error: error.message });
+  }
+};
+exports.getCourses = async (req, res) => {
+  try {
+    const courses = await Course.find()
+      .populate('category', 'name')
+      .populate('subcategory', 'name')
+      .populate('mentorAssigned', 'name email')
+      .populate('managerAssigned', 'name email')
+      .populate('batchesAvailable', 'name')
+      .populate('promoCodes', 'code discountPercentage');
+
+    res.status(200).json({ message: 'Courses fetched successfully', courses });
+  } catch (error) {
+    console.error('Error fetching courses:', error.message);
+    res.status(500).json({ error: 'Error fetching courses' });
+  }
+};
+exports.updateCourse = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    const course = await Course.findByIdAndUpdate(id, updates, { new: true })
+      .populate('category', 'name')
+      .populate('subcategory', 'name')
+      .populate('mentorAssigned', 'name email')
+      .populate('managerAssigned', 'name email')
+      .populate('batchesAvailable', 'name')
+      .populate('promoCodes', 'code discountPercentage');
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    res.status(200).json({ message: 'Course updated successfully', course });
+  } catch (error) {
+    console.error('Error updating course:', error.message);
+    res.status(500).json({ error: 'Error updating course' });
+  }
+};
+exports.deleteCourse = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const course = await Course.findByIdAndDelete(id);
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    res.status(200).json({ message: 'Course deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting course:', error.message);
+    res.status(500).json({ error: 'Error deleting course' });
   }
 };
 

@@ -32,35 +32,106 @@
 
 const mongoose = require('mongoose');
 
+
 const batchSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
-    courseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
-    startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true },
-    students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    name: { 
+      type: String, 
+      required: true 
+    },
+    courseId: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'Course', 
+      required: true 
+    },
+    startDate: { 
+      type: Date, 
+      required: true 
+    },
+    endDate: { 
+      type: Date, 
+      required: true 
+    },
+    students: [
+      { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User' 
+      }
+    ],
     progress: [
       {
-        studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-        completedAssignments: { type: Number, default: 0 }, // Total assignments completed by the student
-        totalScore: { type: Number, default: 0 }, // Total score accumulated by the student
-        averageScore: { type: Number, default: 0 }, // Average score of the student
+        studentId: { 
+          type: mongoose.Schema.Types.ObjectId, 
+          ref: 'User', 
+          required: true 
+        },
+        completedAssignments: { 
+          type: Number, 
+          default: 0 
+        }, // Total assignments completed by the student
+        totalScore: { 
+          type: Number, 
+          default: 0 
+        }, // Total score accumulated by the student
+        averageScore: { 
+          type: Number, 
+          default: 0 
+        }, // Average score of the student
       },
     ],
-    mentors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    mentors: [
+      { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User' 
+      }
+    ],
     assignments: [
       {
-        studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Student submitting the assignment
-        courseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true }, // Course related to the assignment
-        score: { type: Number, default: null }, // Score for the assignment
-        submission: { type: String }, // URL or file path of the submitted assignment
-        feedback: { type: String, default: '' }, // Feedback from mentor or admin
-        submittedAt: { type: Date, default: null }, // Timestamp of submission
+        studentId: { 
+          type: mongoose.Schema.Types.ObjectId, 
+          ref: 'User', 
+          required: true 
+        }, // Student submitting the assignment
+        courseId: { 
+          type: mongoose.Schema.Types.ObjectId, 
+          ref: 'Course', 
+          required: true 
+        }, // Course related to the assignment
+        score: { 
+          type: Number, 
+          default: null 
+        }, // Score for the assignment
+        submission: { 
+          type: String 
+        }, // URL or file path of the submitted assignment
+        feedback: { 
+          type: String, 
+          default: '' 
+        }, // Feedback from mentor or admin
+        submittedAt: { 
+          type: Date, 
+          default: null 
+        }, // Timestamp of submission
       },
     ],
-   
+    managerAssigned: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    }, // Manager assigned to the batch
+    batchStatus: {
+      type: String,
+      enum: ['Active', 'Completed'],
+      default: 'Active',
+    }, // Status of the batch
+    promoCodes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'PromoCode',
+      },
+    ], // Promo codes applied for this batch
   },
   { timestamps: true }
 );
 
 module.exports = mongoose.model('Batch', batchSchema);
+

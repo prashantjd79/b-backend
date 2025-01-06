@@ -57,7 +57,7 @@ app.use('/student', studentRoutes); // Student-related routes
 app.use('/creator', creatorRoutes);
 app.use('/employer', employerRoutes);
 app.use('/support',supportRoutes)
-app.use('/api/paths', pathRoutes);
+app.use('/path', pathRoutes);
 // Welcome route
 app.get('/', (req, res) => {
   res.send('Welcome to the backendd API');
