@@ -3,6 +3,10 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
 const { protect } = require('../middleware/auth');
+const { validateApiKey } = require('../middleware/validateApiKey');
+
+// Apply the API key middleware for all admin routes
+router.use(validateApiKey);
 router.post('/approve-blog', protect(['Admin','Manager']), adminController.approveBlog);
 router.post('/announcements', protect(['Admin']), adminController.createAnnouncement);
 router.get('/announcements', protect(['Admin']), adminController.getAnnouncements);

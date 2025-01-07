@@ -8,6 +8,8 @@ const session = require('express-session');
 const passport = require('passport');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const apiKeyRoutes = require('./routes/apiKey');
+
 
 require('./config/googleAuth'); // Google OAuth configuration
 
@@ -48,6 +50,7 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(cors());
+app.use('/apikey', apiKeyRoutes); 
 
 // API Routes
 app.use('/admin', adminRoutes);

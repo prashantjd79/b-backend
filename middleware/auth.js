@@ -27,39 +27,53 @@
 //     res.status(401).json({ message: 'Invalid token' });
 //   }
 // };
-const jwt=require('jsonwebtoken');
-exports.protect = (roles) => async (req, res, next) => {
+const jwt = require('jsonwebtoken');
+
+exports.protect = (roles = []) => async (req, res, next) => {
   try {
-    // Log the Authorization header
+    // Log the Authorization header for debugging purposes
     console.log('Authorization Header:', req.headers.authorization);
 
-    // Check if the Authorization header exists and starts with "Bearer"
+    // Check if the Authorization header exists and is properly formatted
     if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer')) {
-      console.log('No token or malformed header');
-      return res.status(401).json({ message: 'Not authorized, no token provided' });
+      console.log('No token provided or malformed Authorization header');
+      return res.status(401).json({ message: 'Not authorized, token missing or invalid' });
     }
 
-    // Extract the token
+    // Extract the token from the Authorization header
     const token = req.headers.authorization.split(' ')[1];
-    console.log('Extracted Token:', token); // Debug the token
+    console.log('Extracted Token:', token);
 
-    // Verify the token
+    // Verify the token using the secret
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('Decoded Token:', decoded); // Debug the decoded token
+    console.log('Decoded Token:', decoded); // Debugging the decoded token payload
 
-    req.user = decoded; // Attach user info to the request
+    // Attach the user information to the request object
+    req.user = decoded;
 
-    // Check if the role is allowed
-    if (roles && !roles.includes(decoded.role)) {
+    // Check if the user's role is allowed for this action
+    if (roles.length > 0 && !roles.includes(decoded.role)) {
+      console.log(`User role "${decoded.role}" is not authorized for this action`);
       return res.status(403).json({ message: 'Not authorized for this action' });
     }
 
-    next(); // Proceed to the next middleware
+    // If everything is fine, proceed to the next middleware or route handler
+    next();
   } catch (error) {
-    console.error('Error in protect middleware:', error); // Debug any errors
-    return res.status(401).json({ message: 'Token verification failed' });
+    // Handle token verification errors
+    console.error('Error in protect middleware:', error.message || error);
+
+    // Respond with an appropriate error message
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Token has expired' });
+    } else if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Invalid token' });
+    } else {
+      return res.status(500).json({ message: 'Internal server error' });
+    }
   }
 };
+
 
 
 // exports.protect = (roles) => async (req, res, next) => {
