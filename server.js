@@ -9,7 +9,7 @@ const passport = require('passport');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const apiKeyRoutes = require('./routes/apiKey');
-const courseCreatorRoutes = require('./routes/courseCreatorRoutes');
+
 
 require('./config/googleAuth'); // Google OAuth configuration
 
@@ -35,7 +35,7 @@ const cors=require("cors");
 // Body-parser middleware
 app.use(bodyParser.json()); // Parse JSON request bodies
 app.use(bodyParser.urlencoded({ extended: true })); // Parse URL-encoded request bodies
-app.use('/course-creator', courseCreatorRoutes);
+
 // Session configuration
 app.use(
   session({

@@ -1,5 +1,7 @@
 const Session = require('../models/Session');
+
 const Batch = require('../models/Batch');
+const Course = require('../models/Course'); // Import the Course model
 // Assuming you have a Session model
 exports.scheduleSession = async (req, res) => {
   try {
@@ -27,40 +29,55 @@ exports.scheduleSession = async (req, res) => {
   }
 };
 
+
+
+ // Ensure Lesson model is available
+const Assignment = require('../models/Assignment');
+
 exports.createAssignment = async (req, res) => {
   try {
-    const { batchId, studentId, courseId,startDate,endDate, submission } = req.body;
+    const { title, description, submissionURL } = req.body;
+    const { lessonId } = req.params;
 
-    const batch = await Batch.findById(batchId);
-    if (!batch) return res.status(404).json({ message: 'Batch not found' });
-
-    // Check if assignment exists
-    const existingAssignment = batch.assignments.find(
-      (a) =>
-        a.studentId.toString() === studentId.toString() &&
-        a.courseId.toString() === courseId.toString()
-    );
-
-    if (existingAssignment) {
-      return res.status(400).json({ message: 'Assignment already exists' });
+    // Validate the input
+    if (!title || !description || !lessonId) {
+      return res.status(400).json({ message: 'Title, description, and lessonId are required' });
     }
 
-    // Add new assignment
-    batch.assignments.push({
-      studentId,
-      courseId,
-      startDate,
-      endDate,
-      submission: submission || null, // Add the submission from request or set to null
-    });
-    await batch.save();
+    // Find the lesson by ID
+    const lesson = await Lesson.findById(lessonId);
+    if (!lesson) {
+      return res.status(404).json({ message: 'Lesson not found' });
+    }
 
-    res.status(201).json({ message: 'Assignment created successfully', batch });
+    // Check for duplicate assignment titles
+    const existingAssignment = await Assignment.findOne({ lesson: lessonId, title: title.trim() });
+    if (existingAssignment) {
+      return res.status(400).json({ message: 'Assignment with this title already exists for this lesson' });
+    }
+
+    // Create the assignment
+    const assignment = new Assignment({
+      title: title.trim(),
+      description,
+      submissionURL,
+      lesson: lessonId,
+    });
+
+    // Save the assignment
+    await assignment.save();
+
+    // Add the assignment to the lesson
+    lesson.assignments.push(assignment._id);
+    await lesson.save();
+
+    res.status(201).json({ message: 'Assignment created successfully', assignment });
   } catch (error) {
     console.error('Error creating assignment:', error.message);
     res.status(500).json({ error: 'Error creating assignment' });
   }
 };
+
 
 
   exports.gradeAssignment = async (req, res) => {
@@ -93,3 +110,4 @@ exports.createAssignment = async (req, res) => {
   };
 
 
+ 

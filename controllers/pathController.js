@@ -1,13 +1,43 @@
 const Path = require('../models/Path');
-const Course = require('../models/Course');
+const Batch = require('../models/Batch'); // Import Batch model
 
 // Create a new Path
 exports.createPath = async (req, res) => {
   try {
     const { name, description, category, courses, roadmapSuggestions } = req.body;
 
+    // Check if a path with the same name already exists
+    const existingPath = await Path.findOne({ name: name.trim() });
+    if (existingPath) {
+      return res.status(400).json({ message: "Path with this name already exists." });
+    }
+
+    // Validate assignment IDs in the request by checking within the Batch model
+    for (const course of courses) {
+      for (const batch of course.batches) {
+        // Find the batch to validate the assignments
+        const existingBatch = await Batch.findById(batch.batchId);
+        if (!existingBatch) {
+          return res.status(400).json({ message: `Invalid batch ID: ${batch.batchId}` });
+        }
+
+        for (const assignment of batch.assignments) {
+          const assignmentExists = existingBatch.assignments.some(
+            (a) => a._id.toString() === assignment.assignmentId.toString()
+          );
+
+          if (!assignmentExists) {
+            return res
+              .status(400)
+              .json({ message: `Invalid assignment ID: ${assignment.assignmentId}` });
+          }
+        }
+      }
+    }
+
+    // Create the new path
     const path = new Path({
-      name,
+      name: name.trim(),
       description,
       category,
       courses,
@@ -17,14 +47,15 @@ exports.createPath = async (req, res) => {
     await path.save();
 
     res.status(201).json({
-      message: 'Path created successfully',
+      message: "Path created successfully",
       path,
     });
   } catch (error) {
-    console.error('Error creating path:', error.message);
-    res.status(500).json({ error: 'Error creating path' });
+    console.error("Error creating path:", error.message);
+    res.status(500).json({ message: "Error creating path", error: error.message });
   }
 };
+
 
 
 

@@ -9,6 +9,7 @@ const { validateApiKey } = require('../middleware/validateApiKey');
 router.use(validateApiKey);
 router.post('/approve-blog', protect(['Admin','Manager']), adminController.approveBlog);
 router.post('/announcements', protect(['Admin']), adminController.createAnnouncement);
+
 router.get('/announcements', protect(['Admin']), adminController.getAnnouncements);
 router.put('/announcements/:id', protect(['Admin']), adminController.updateAnnouncement);
 router.delete('/announcements/:id', protect(['Admin']),adminController.deleteAnnouncement);
@@ -64,8 +65,8 @@ router.post('/batch/create', protect(['Admin']), adminController.createBatch);
 router.get('/batch', protect(['Admin']), adminController.getBatches);
 router.put('/batch/update/:id', protect(['Admin']), adminController.updateBatch);
 router.delete('/batch/delete/:id', protect(['Admin']), adminController.deleteBatch);
-
-
+router.post('/create-lesson', protect(['Admin']), adminController.createLesson);
+router.get('/course/:courseId', protect(['Admin']), adminController.getCourseWithLessons);
 
 module.exports = router;
 

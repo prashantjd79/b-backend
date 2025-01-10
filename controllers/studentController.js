@@ -95,35 +95,35 @@ exports.enrollInCourse = async (req, res) => {
   //   }
   // };
 
-  exports.submitAssignment = async (req, res) => {
-    try {
-      const { batchId, courseId, submission } = req.body;
+  // exports.submitAssignment = async (req, res) => {
+  //   try {
+  //     const { batchId, courseId, submission } = req.body;
   
-      const batch = await Batch.findById(batchId);
-      if (!batch) {
-        return res.status(404).json({ message: 'Batch not found' });
-      }
+  //     const batch = await Batch.findById(batchId);
+  //     if (!batch) {
+  //       return res.status(404).json({ message: 'Batch not found' });
+  //     }
   
-      if (!batch.students.includes(req.user.id)) {
-        return res.status(403).json({ message: 'You are not enrolled in this batch' });
-      }
+  //     if (!batch.students.includes(req.user.id)) {
+  //       return res.status(403).json({ message: 'You are not enrolled in this batch' });
+  //     }
   
-      // Add assignment submission
-      batch.assignments.push({
-        studentId: req.user.id,
-        courseId,
-        submission,
-        submittedAt: new Date(),
-      });
+  //     // Add assignment submission
+  //     batch.assignments.push({
+  //       studentId: req.user.id,
+  //       courseId,
+  //       submission,
+  //       submittedAt: new Date(),
+  //     });
   
-      await batch.save();
+  //     await batch.save();
   
-      res.status(200).json({ message: 'Assignment submitted successfully' });
-    } catch (error) {
-      console.error('Error submitting assignment:', error);
-      res.status(500).json({ message: 'Error submitting assignment', error: error.message });
-    }
-  };
+  //     res.status(200).json({ message: 'Assignment submitted successfully' });
+  //   } catch (error) {
+  //     console.error('Error submitting assignment:', error);
+  //     res.status(500).json({ message: 'Error submitting assignment', error: error.message });
+  //   }
+  // };
   
 
 
@@ -405,5 +405,115 @@ exports.getStudentTransactions = async (req, res) => {
   } catch (error) {
     console.error('Error fetching student transactions:', error.message);
     res.status(500).json({ error: 'Error fetching student transactions.' });
+  }
+};
+
+
+ 
+// Controller function to handle assignment submission
+exports.submitAssignment = async (req, res) => {
+  try {
+    const { studentId, courseId, lessonId, assignmentId, answers } = req.body;
+
+    // Ensure the course exists
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(400).json({ message: "Course not found" });
+    }
+
+    // Find the specific lesson and assignment
+    const lesson = course.lessons.find(lesson => lesson.lessonId === lessonId);
+    if (!lesson) {
+      return res.status(400).json({ message: "Lesson not found" });
+    }
+
+    const assignment = lesson.assignments.find(assignment => assignment._id.toString() === assignmentId);
+    if (!assignment) {
+      return res.status(400).json({ message: "Assignment not found" });
+    }
+
+    // Process the answers and calculate the score (modify as needed)
+    const score = calculateScore(answers, lesson.quizzes);  // Call the function to calculate the score
+
+    // Find the student and update their assignment submission
+    const student = await User.findById(studentId);
+    if (!student) {
+      return res.status(400).json({ message: "Student not found" });
+    }
+
+    // Update student's submission (add new submission record)
+    student.assignmentsSubmitted.push({
+      assignmentId,
+      answers,
+      score,
+      submissionDate: new Date(),
+    });
+
+    await student.save();  // Save the student data
+
+    return res.status(200).json({
+      message: "Assignment submitted successfully",
+      student,  // Returning the updated student
+    });
+  } catch (error) {
+    console.error('Error submitting assignment:', error);
+    return res.status(500).json({ message: "Error submitting assignment", error });
+  }
+};
+
+// Helper function to calculate the score based on answers
+const calculateScore = (answers, quizzes) => {
+  let score = 0;
+  quizzes.forEach((quiz, index) => {
+    if (answers[index] === quiz.correctAnswer) {
+      score += 10;  // Add points for each correct answer (adjust as needed)
+    }
+  });
+  return score;
+};
+
+exports.submitQuiz = async (req, res) => {
+  try {
+    const { studentId, quizId, answers } = req.body; // Collect answers submitted by student
+
+    const quiz = await Quiz.findById(quizId);
+
+    let score = 0;
+    // Check answers and calculate score
+    answers.forEach((answer, index) => {
+      if (answer === quiz.correctAnswers[index]) {
+        score += 10; // 10 points for each correct answer
+      }
+    });
+
+    // Update the student's EvoScore
+    const student = await User.findById(studentId);
+    student.evoScore += score; // Increment the student's score
+    await student.save();
+
+    res.status(200).json({
+      message: 'Quiz submitted successfully.',
+      evoScore: student.evoScore,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error submitting quiz.', error });
+  }
+};
+
+exports.getEvoScore = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+
+    const student = await User.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    res.status(200).json({
+      message: 'Student EvoScore fetched successfully.',
+      evoScore: student.evoScore,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching EvoScore.', error });
   }
 };

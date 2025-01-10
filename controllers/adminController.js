@@ -1,5 +1,6 @@
 
 const User = require('../models/User');
+const { v4: uuidv4 } = require('uuid');
 const Course = require('../models/Course');
 const jwt = require('jsonwebtoken');
 const Batch = require('../models/Batch');
@@ -13,6 +14,10 @@ const Subcategory = require('../models/Subcategory');
 const PromoCode = require('../models/PromoCode');
 const Manager = require('../models/User');
 const Mentor=require('../models/User');
+
+
+
+
 exports.deleteManager = async (req, res) => {
   try {
     const { id } = req.params;
@@ -178,6 +183,7 @@ exports.createUser = async (req, res) => {
 //     res.status(500).json({ error: 'An error occurred while creating the course' });
 //   }
 // };
+
 exports.createCourse = async (req, res) => {
   try {
     const {
@@ -194,8 +200,55 @@ exports.createCourse = async (req, res) => {
       discountedPrice,
     } = req.body;
 
+    // Check for duplicate course name
+    const existingCourse = await Course.findOne({ name: name.trim() });
+    if (existingCourse) {
+      return res.status(400).json({ message: 'A course with this name already exists' });
+    }
+
+    // Validate Category
+    const validCategory = await Category.findById(category);
+    if (!validCategory) {
+      return res.status(400).json({ message: 'Invalid category ID' });
+    }
+
+    // Validate Subcategory
+    const validSubcategory = await Subcategory.findById(subcategory);
+    if (!validSubcategory) {
+      return res.status(400).json({ message: 'Invalid subcategory ID' });
+    }
+
+    // Validate Mentor
+    const validMentor = await User.findById(mentorAssigned);
+    if (!validMentor || validMentor.role !== 'Mentor') {
+      return res.status(400).json({ message: 'Invalid mentor ID or user is not a mentor' });
+    }
+
+    // Validate Manager
+    const validManager = await User.findById(managerAssigned);
+    if (!validManager || validManager.role !== 'Manager') {
+      return res.status(400).json({ message: 'Invalid manager ID or user is not a manager' });
+    }
+
+    // Validate Batches (if provided)
+    if (batchesAvailable && batchesAvailable.length > 0) {
+      const validBatches = await Batch.find({ _id: { $in: batchesAvailable } });
+      if (validBatches.length !== batchesAvailable.length) {
+        return res.status(400).json({ message: 'One or more batch IDs are invalid' });
+      }
+    }
+
+    // Validate Promo Codes (if provided)
+    if (promoCodes && promoCodes.length > 0) {
+      const validPromoCodes = await PromoCode.find({ _id: { $in: promoCodes } });
+      if (validPromoCodes.length !== promoCodes.length) {
+        return res.status(400).json({ message: 'One or more promo code IDs are invalid' });
+      }
+    }
+
+    // Create a new course instance
     const course = new Course({
-      name,
+      name: name.trim(),
       category,
       subcategory,
       description,
@@ -208,6 +261,7 @@ exports.createCourse = async (req, res) => {
       discountedPrice,
     });
 
+    // Save the course to the database
     await course.save();
 
     res.status(201).json({ message: 'Course created successfully', course });
@@ -216,6 +270,7 @@ exports.createCourse = async (req, res) => {
     res.status(500).json({ error: 'Error creating course' });
   }
 };
+
 
 exports.login = async (req, res) => {
   try {
@@ -952,10 +1007,19 @@ exports.simulateTransaction = async (req, res) => {
 //     res.status(500).json({ error: 'Error creating announcement' });
 //   }
 // };
+
+
+
 exports.createAnnouncement = async (req, res) => {
   try {
     const { title, message, media, targetAudience, visibilityStart, visibilityEnd } = req.body;
 
+    // Validate required fields
+    if (!title || !message || !targetAudience || !visibilityStart || !visibilityEnd) {
+      return res.status(400).json({ error: 'All fields are required: title, message, targetAudience, visibilityStart, and visibilityEnd.' });
+    }
+
+    // Create new announcement
     const announcement = new Announcement({
       title,
       message,
@@ -963,9 +1027,10 @@ exports.createAnnouncement = async (req, res) => {
       targetAudience,
       visibilityStart,
       visibilityEnd,
-      createdBy: req.user.id, // Admin ID
+      createdBy: req.user.id, // Assuming `req.user` is populated by the middleware
     });
 
+    // Save to database
     await announcement.save();
 
     res.status(201).json({ message: 'Announcement created successfully.', announcement });
@@ -974,6 +1039,8 @@ exports.createAnnouncement = async (req, res) => {
     res.status(500).json({ error: 'Error creating announcement.' });
   }
 };
+
+
 exports.getAnnouncements = async (req, res) => {
   try {
     const announcements = await Announcement.find()
@@ -1369,3 +1436,67 @@ exports.deleteCourse = async (req, res) => {
   }
 };
 
+const Lesson = require('../models/Lesson');
+
+
+exports.createLesson = async (req, res) => {
+  try {
+    const { title, description, courseId, videos } = req.body;
+
+    // Validate input
+    if (!title || !description || !courseId) {
+      return res.status(400).json({ message: 'Title, description, and courseId are required' });
+    }
+
+    if (videos && !Array.isArray(videos)) {
+      return res.status(400).json({ message: 'Videos should be an array' });
+    }
+
+    // Validate course
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Create a new lesson
+    const lesson = new Lesson({
+      title: title.trim(),
+      description,
+      course: courseId,
+      videos, // Save videos data in the Lesson document
+    });
+
+    // Save the lesson to the database
+    await lesson.save();
+
+    // Add the lessonId to the course's lessons array
+    course.lessons.push(lesson._id);
+    await course.save();
+
+    res.status(201).json({ message: 'Lesson created successfully', lesson });
+  } catch (error) {
+    console.error('Error creating lesson:', error); // Log the exact error for debugging
+    res.status(500).json({ error: 'Error creating lesson', details: error.message });
+  }
+};
+exports.getCourseWithLessons = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+
+    // Find course and populate the lessons field
+    const course = await Course.findById(courseId).populate({
+      path: 'lessons', // Populate the lessons field
+      model: 'Lesson', // Use the Lesson model
+      select: '-__v', // Exclude the __v field
+    });
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    res.status(200).json({ course });
+  } catch (error) {
+    console.error('Error fetching course with lessons:', error);
+    res.status(500).json({ error: 'Error fetching course with lessons', details: error.message });
+  }
+};

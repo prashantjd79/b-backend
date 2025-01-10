@@ -6,7 +6,7 @@ const {applyToJob}=require('../controllers/studentController');
 
 
 router.post('/enroll', protect(['Student']), studentController.enrollInCourse);
-router.post('/submit-assignment', protect(['Student']), studentController.submitAssignment);
+//router.post('/submit-assignment', protect(['Student']), studentController.submitAssignment);
 // router.get('/progress', protect(['Student']), studentController.viewProgress);
 
 router.post('/apply',protect(['Student']),applyToJob),
@@ -22,6 +22,15 @@ router.get('/batch/:batchId', protect(['Student']), studentController.getBatchDe
 router.get('/transactions', protect(['Student']), studentController.getStudentTransactions);
 
 
+
+// Route for submitting assignments
+router.post('/submit-assignment', studentController.submitAssignment);
+
+// Route for submitting quizzes
+router.post('/submit-quiz', studentController.submitQuiz);
+
+// Route for fetching EvoScore
+router.get('/:studentId/evo-score', studentController.getEvoScore);
 
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 

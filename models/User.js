@@ -1,4 +1,5 @@
 
+
 // const mongoose = require('mongoose');
 // const bcrypt = require('bcrypt');
 
@@ -10,7 +11,7 @@
 //     password: { type: String, select: false }, // Optional password for OAuth users
 //     role: {
 //       type: String,
-//       enum: ['Admin', 'Manager', 'Creator', 'Mentor', 'Student', 'Employer'],
+//       enum: ['Admin', 'Manager', 'Creator', 'Mentor', 'Student', 'Employer', 'CourseCreator'], // Added Course Creator role
 //       required: true,
 //     },
 //     dob: { type: Date }, // Date of Birth
@@ -102,6 +103,9 @@
 //     ],
 //     status: { type: String, enum: ['Approved', 'Disapproved'], default: 'Disapproved' }, // Approval status
 
+//     // Course Creator-specific fields
+//     createdCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }], // Reference to courses created by this user
+
 //     // Flags and other fields
 //     isOAuthUser: { type: Boolean, default: false }, // Flag for OAuth users
 //   },
@@ -121,6 +125,9 @@
 // };
 
 // module.exports = mongoose.model('User', userSchema);
+
+
+
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
@@ -226,6 +233,9 @@ const userSchema = new mongoose.Schema(
 
     // Course Creator-specific fields
     createdCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }], // Reference to courses created by this user
+
+    // EvoScore field for students
+    evoScore: { type: Number, default: 0 }, // Track EvoScore
 
     // Flags and other fields
     isOAuthUser: { type: Boolean, default: false }, // Flag for OAuth users
