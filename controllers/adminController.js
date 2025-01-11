@@ -15,7 +15,7 @@ const PromoCode = require('../models/PromoCode');
 const Manager = require('../models/User');
 const Mentor=require('../models/User');
 const mongoose = require('mongoose');
-
+const Path = require('../models/Path');
 
 
 
@@ -1866,5 +1866,93 @@ exports.addQuizOrAssignment = async (req, res) => {
   } catch (error) {
     console.error('Error adding quiz or assignment:', error.message);
     res.status(500).json({ error: 'Error adding quiz or assignment', details: error.message });
+  }
+};
+
+
+
+exports.createPath = async (req, res) => {
+  try {
+    const { name, description, courses, roadmap } = req.body;
+
+    // Validate courses
+    if (courses && courses.length > 0) {
+      const validCourses = await Course.find({ _id: { $in: courses } });
+      if (validCourses.length !== courses.length) {
+        return res.status(400).json({ message: 'One or more course IDs are invalid' });
+      }
+    }
+
+    // Create a new path
+    const path = new Path({
+      name,
+      description,
+      courses,
+      roadmap,
+    });
+
+    // Save the path to the database
+    await path.save();
+
+    res.status(201).json({ message: 'Path created successfully', path });
+  } catch (error) {
+    console.error('Error creating path:', error.message);
+    res.status(500).json({ error: 'Error creating path', details: error.message });
+  }
+};
+exports.getPath = async (req, res) => {
+  try {
+    const { pathId } = req.params;
+
+    // Find the path and populate courses
+    const path = await Path.findById(pathId).populate('courses', 'name description');
+    if (!path) {
+      return res.status(404).json({ message: 'Path not found' });
+    }
+
+    res.status(200).json({ message: 'Path retrieved successfully', path });
+  } catch (error) {
+    console.error('Error retrieving path:', error.message);
+    res.status(500).json({ error: 'Error retrieving path', details: error.message });
+  }
+};
+exports.updatePath = async (req, res) => {
+  try {
+    const { pathId, updateData } = req.body;
+
+    // Find the path
+    const path = await Path.findById(pathId);
+    if (!path) {
+      return res.status(404).json({ message: 'Path not found' });
+    }
+
+    // Update the fields
+    Object.keys(updateData).forEach((key) => {
+      path[key] = updateData[key];
+    });
+
+    // Save the updated path
+    await path.save();
+
+    res.status(200).json({ message: 'Path updated successfully', path });
+  } catch (error) {
+    console.error('Error updating path:', error.message);
+    res.status(500).json({ error: 'Error updating path', details: error.message });
+  }
+};
+exports.deletePath = async (req, res) => {
+  try {
+    const { pathId } = req.params;
+
+    // Delete the path
+    const path = await Path.findByIdAndDelete(pathId);
+    if (!path) {
+      return res.status(404).json({ message: 'Path not found' });
+    }
+
+    res.status(200).json({ message: 'Path deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting path:', error.message);
+    res.status(500).json({ error: 'Error deleting path', details: error.message });
   }
 };

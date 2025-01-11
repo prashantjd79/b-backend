@@ -91,6 +91,12 @@ router.get('/course/:courseId', protect(['Admin']), adminController.getCourse);
 // Delete a course
 router.delete('/course/:courseId', protect(['Admin']), adminController.deleteCourse);
 
+
+router.post('/create-path', protect(['Admin']), adminController.createPath);
+router.get('/path/:pathId', protect(['Admin']), adminController.getPath);
+router.put('/update-path', protect(['Admin']), adminController.updatePath);
+router.delete('/path/:pathId', protect(['Admin']), adminController.deletePath);
+
 module.exports = router;
 
 
