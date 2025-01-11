@@ -273,6 +273,60 @@ exports.createCourse = async (req, res) => {
 };
 
 
+
+
+
+
+exports.deleteCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+
+    // Delete the course
+    const course = await Course.findByIdAndDelete(courseId);
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    res.status(200).json({ message: 'Course deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting course:', error.message);
+    res.status(500).json({ error: 'Error deleting course', details: error.message });
+  }
+};
+exports.getCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+
+    // Fetch the course by ID
+    const course = await Course.findById(courseId)
+      .populate('category', 'name')
+      .populate('subcategory', 'name')
+      .populate('mentorAssigned', 'name email')
+      .populate('managerAssigned', 'name email')
+      .populate('batchesAvailable', 'name');
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Calculate the number of lessons in the course
+    const lessonCount = course.lessons.length;
+
+    res.status(200).json({
+      message: 'Course retrieved successfully',
+      course: {
+        ...course.toObject(), // Convert Mongoose document to plain object
+        lessonCount, // Add the lesson count
+      },
+    });
+  } catch (error) {
+    console.error('Error retrieving course:', error.message);
+    res.status(500).json({ error: 'Error retrieving course', details: error.message });
+  }
+};
+
+
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -1381,61 +1435,97 @@ exports.deleteEmployer = async (req, res) => {
     res.status(500).json({ message: 'Error deleting employer', error: error.message });
   }
 };
-exports.getCourses = async (req, res) => {
-  try {
-    const courses = await Course.find()
-      .populate('category', 'name')
-      .populate('subcategory', 'name')
-      .populate('mentorAssigned', 'name email')
-      .populate('managerAssigned', 'name email')
-      .populate('batchesAvailable', 'name')
-      .populate('promoCodes', 'code discountPercentage');
 
-    res.status(200).json({ message: 'Courses fetched successfully', courses });
-  } catch (error) {
-    console.error('Error fetching courses:', error.message);
-    res.status(500).json({ error: 'Error fetching courses' });
-  }
-};
+
 exports.updateCourse = async (req, res) => {
   try {
-    const { id } = req.params;
-    const updates = req.body;
+    const { courseId, updateData } = req.body;
 
-    const course = await Course.findByIdAndUpdate(id, updates, { new: true })
-      .populate('category', 'name')
-      .populate('subcategory', 'name')
-      .populate('mentorAssigned', 'name email')
-      .populate('managerAssigned', 'name email')
-      .populate('batchesAvailable', 'name')
-      .populate('promoCodes', 'code discountPercentage');
+    // Validate the courseId
+    if (!mongoose.Types.ObjectId.isValid(courseId)) {
+      return res.status(400).json({ message: 'Invalid courseId format' });
+    }
 
+    // Find the course
+    const course = await Course.findById(courseId);
     if (!course) {
       return res.status(404).json({ message: 'Course not found' });
     }
+
+    // Validate Course Name (if being updated)
+    if (updateData.name) {
+      const existingCourse = await Course.findOne({
+        name: updateData.name.trim(),
+        _id: { $ne: courseId }, // Exclude the current course from the query
+      });
+      if (existingCourse) {
+        return res.status(400).json({ message: 'A course with this name already exists' });
+      }
+    }
+
+    // Validate Category (if being updated)
+    if (updateData.category) {
+      const validCategory = await Category.findById(updateData.category);
+      if (!validCategory) {
+        return res.status(400).json({ message: 'Invalid category ID' });
+      }
+    }
+
+    // Validate Subcategory (if being updated)
+    if (updateData.subcategory) {
+      const validSubcategory = await Subcategory.findById(updateData.subcategory);
+      if (!validSubcategory) {
+        return res.status(400).json({ message: 'Invalid subcategory ID' });
+      }
+    }
+
+    // Validate Mentor (if being updated)
+    if (updateData.mentorAssigned) {
+      const validMentor = await User.findById(updateData.mentorAssigned);
+      if (!validMentor || validMentor.role !== 'Mentor') {
+        return res.status(400).json({ message: 'Invalid mentor ID or user is not a mentor' });
+      }
+    }
+
+    // Validate Manager (if being updated)
+    if (updateData.managerAssigned) {
+      const validManager = await User.findById(updateData.managerAssigned);
+      if (!validManager || validManager.role !== 'Manager') {
+        return res.status(400).json({ message: 'Invalid manager ID or user is not a manager' });
+      }
+    }
+
+    // Validate Batches (if being updated)
+    if (updateData.batchesAvailable && updateData.batchesAvailable.length > 0) {
+      const validBatches = await Batch.find({ _id: { $in: updateData.batchesAvailable } });
+      if (validBatches.length !== updateData.batchesAvailable.length) {
+        return res.status(400).json({ message: 'One or more batch IDs are invalid' });
+      }
+    }
+
+    // Validate Promo Codes (if being updated)
+    if (updateData.promoCodes && updateData.promoCodes.length > 0) {
+      const validPromoCodes = await PromoCode.find({ _id: { $in: updateData.promoCodes } });
+      if (validPromoCodes.length !== updateData.promoCodes.length) {
+        return res.status(400).json({ message: 'One or more promo code IDs are invalid' });
+      }
+    }
+
+    // Update the course with the provided data (validate only modified fields)
+    Object.keys(updateData).forEach((key) => {
+      course[key] = updateData[key];
+    });
+
+    // Save the updated course with only modified fields validated
+    await course.save({ validateModifiedOnly: true });
 
     res.status(200).json({ message: 'Course updated successfully', course });
   } catch (error) {
     console.error('Error updating course:', error.message);
-    res.status(500).json({ error: 'Error updating course' });
+    res.status(500).json({ error: 'Error updating course', details: error.message });
   }
 };
-exports.deleteCourse = async (req, res) => {
-  try {
-    const { id } = req.params;
 
-    const course = await Course.findByIdAndDelete(id);
-
-    if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
-    }
-
-    res.status(200).json({ message: 'Course deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting course:', error.message);
-    res.status(500).json({ error: 'Error deleting course' });
-  }
-};
 
 exports.createLesson = async (req, res) => {
   try {

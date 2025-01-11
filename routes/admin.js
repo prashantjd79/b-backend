@@ -14,10 +14,10 @@ router.get('/announcements', protect(['Admin']), adminController.getAnnouncement
 router.put('/announcements/:id', protect(['Admin']), adminController.updateAnnouncement);
 router.delete('/announcements/:id', protect(['Admin']),adminController.deleteAnnouncement);
 router.post('/create-user', protect(['Admin']), adminController.createUser);
-router.post('/create-course', protect(['Admin']), adminController.createCourse);
-router.get('/courses', protect(['Admin']), adminController.getCourses);
-router.put('/update-course/:id', protect(['Admin']), adminController.updateCourse);
-router.delete('/delete-course/:id', protect(['Admin']), adminController.deleteCourse);
+
+//router.get('/courses', protect(['Admin']), adminController.getCourses);
+
+//router.delete('/delete-course/:id', protect(['Admin']), adminController.deleteCourse);
 //router.post('/create-batch', protect(['Admin']), adminController.createBatch);
 router.post('/assign-course', protect(['Admin']), adminController.assignCourse);
 router.get('/users', protect(['Admin']), adminController.getUsers);
@@ -81,6 +81,15 @@ router.put('/update-quiz-or-assignment', protect(['Admin',' Mentor']),adminContr
 router.delete('/delete-quiz-or-assignment', protect(['Admin','Mentor']), adminController.deleteQuizOrAssignment);
 router.post('/get-quiz-assignment-count', protect(['Admin']),adminController.getQuizAndAssignmentCount);
 router.post('/add-quiz-or-assignment', protect(['Admin']), adminController.addQuizOrAssignment);
+
+// Update a course
+router.post('/create-course', protect(['Admin']), adminController.createCourse);
+router.put('/update-course', protect(['Admin']), adminController.updateCourse);
+// Get a particular course
+router.get('/course/:courseId', protect(['Admin']), adminController.getCourse);
+
+// Delete a course
+router.delete('/course/:courseId', protect(['Admin']), adminController.deleteCourse);
 
 module.exports = router;
 
