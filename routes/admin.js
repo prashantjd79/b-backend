@@ -65,8 +65,22 @@ router.post('/batch/create', protect(['Admin']), adminController.createBatch);
 router.get('/batch', protect(['Admin']), adminController.getBatches);
 router.put('/batch/update/:id', protect(['Admin']), adminController.updateBatch);
 router.delete('/batch/delete/:id', protect(['Admin']), adminController.deleteBatch);
-router.post('/create-lesson', protect(['Admin']), adminController.createLesson);
+//router.post('/create-lesson', protect(['Admin']), adminController.createLesson);
+
 router.get('/course/:courseId', protect(['Admin']), adminController.getCourseWithLessons);
+
+// Create a lesson
+router.post('/create-lesson', protect(['Admin']),adminController.createLesson);
+
+// Update a lesson
+router.put('/update-lesson', protect(['Admin']),adminController.updateLesson);
+
+// Delete a lesson
+router.delete('/delete-lesson', protect(['Admin']), adminController.deleteLesson);
+router.put('/update-quiz-or-assignment', protect(['Admin',' Mentor']),adminController.updateQuizOrAssignment);
+router.delete('/delete-quiz-or-assignment', protect(['Admin','Mentor']), adminController.deleteQuizOrAssignment);
+router.post('/get-quiz-assignment-count', protect(['Admin']),adminController.getQuizAndAssignmentCount);
+router.post('/add-quiz-or-assignment', protect(['Admin']), adminController.addQuizOrAssignment);
 
 module.exports = router;
 

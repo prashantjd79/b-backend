@@ -31,50 +31,34 @@ exports.scheduleSession = async (req, res) => {
 
 
 
- // Ensure Lesson model is available
-const Assignment = require('../models/Assignment');
 
-exports.createAssignment = async (req, res) => {
+
+exports.addAssignment = async (req, res) => {
   try {
-    const { title, description, submissionURL } = req.body;
-    const { lessonId } = req.params;
+    const { courseId, lessonId, assignment } = req.body;
 
-    // Validate the input
-    if (!title || !description || !lessonId) {
-      return res.status(400).json({ message: 'Title, description, and lessonId are required' });
+    // Validate the course
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
     }
 
-    // Find the lesson by ID
-    const lesson = await Lesson.findById(lessonId);
+    // Find the lesson
+    const lesson = course.lessons.id(lessonId);
     if (!lesson) {
       return res.status(404).json({ message: 'Lesson not found' });
     }
 
-    // Check for duplicate assignment titles
-    const existingAssignment = await Assignment.findOne({ lesson: lessonId, title: title.trim() });
-    if (existingAssignment) {
-      return res.status(400).json({ message: 'Assignment with this title already exists for this lesson' });
-    }
-
-    // Create the assignment
-    const assignment = new Assignment({
-      title: title.trim(),
-      description,
-      submissionURL,
-      lesson: lessonId,
-    });
-
-    // Save the assignment
-    await assignment.save();
-
     // Add the assignment to the lesson
-    lesson.assignments.push(assignment._id);
-    await lesson.save();
+    lesson.assignments.push(assignment);
 
-    res.status(201).json({ message: 'Assignment created successfully', assignment });
+    // Save the updated course
+    await course.save();
+
+    res.status(201).json({ message: 'Assignment added successfully', lesson });
   } catch (error) {
-    console.error('Error creating assignment:', error.message);
-    res.status(500).json({ error: 'Error creating assignment' });
+    console.error('Error adding assignment:', error.message);
+    res.status(500).json({ error: 'Error adding assignment', details: error.message });
   }
 };
 

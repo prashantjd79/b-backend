@@ -14,6 +14,7 @@ const Subcategory = require('../models/Subcategory');
 const PromoCode = require('../models/PromoCode');
 const Manager = require('../models/User');
 const Mentor=require('../models/User');
+const mongoose = require('mongoose');
 
 
 
@@ -1436,49 +1437,63 @@ exports.deleteCourse = async (req, res) => {
   }
 };
 
-const Lesson = require('../models/Lesson');
-
-
 exports.createLesson = async (req, res) => {
   try {
-    const { title, description, courseId, videos } = req.body;
+    const { courseId, title, description, videos, quizzes, assignments } = req.body;
 
-    // Validate input
-    if (!title || !description || !courseId) {
-      return res.status(400).json({ message: 'Title, description, and courseId are required' });
-    }
-
-    if (videos && !Array.isArray(videos)) {
-      return res.status(400).json({ message: 'Videos should be an array' });
-    }
-
-    // Validate course
+    // Validate the course
     const course = await Course.findById(courseId);
     if (!course) {
       return res.status(404).json({ message: 'Course not found' });
     }
 
-    // Create a new lesson
-    const lesson = new Lesson({
-      title: title.trim(),
+    // Validate videos
+    if (videos && videos.length > 0) {
+      for (const video of videos) {
+        if (!video.title || !video.videoURL) {
+          return res.status(400).json({
+            message: 'Each video must have a title and videoURL',
+            invalidVideo: video,
+          });
+        }
+      }
+    }
+
+    // Validate quizzes
+    if (quizzes && quizzes.length > 0) {
+      for (const quiz of quizzes) {
+        if (!quiz.question || !quiz.correctAnswer || !quiz.options || quiz.options.length < 2) {
+          return res.status(400).json({
+            message: 'Each quiz must have a question, correct answer, and at least two options',
+            invalidQuiz: quiz,
+          });
+        }
+      }
+    }
+
+    // Add the lesson to the course
+    const newLesson = {
+      title,
       description,
-      course: courseId,
-      videos, // Save videos data in the Lesson document
-    });
+      videos: videos || [],
+      quizzes: quizzes || [],
+      assignments: assignments || [],
+    };
 
-    // Save the lesson to the database
-    await lesson.save();
+    course.lessons.push(newLesson);
 
-    // Add the lessonId to the course's lessons array
-    course.lessons.push(lesson._id);
+    // Save the updated course
     await course.save();
 
-    res.status(201).json({ message: 'Lesson created successfully', lesson });
+    res.status(201).json({ message: 'Lesson created successfully', lesson: newLesson });
   } catch (error) {
-    console.error('Error creating lesson:', error); // Log the exact error for debugging
+    console.error('Error creating lesson:', error.message);
     res.status(500).json({ error: 'Error creating lesson', details: error.message });
   }
 };
+
+
+
 exports.getCourseWithLessons = async (req, res) => {
   try {
     const { courseId } = req.params;
@@ -1498,5 +1513,268 @@ exports.getCourseWithLessons = async (req, res) => {
   } catch (error) {
     console.error('Error fetching course with lessons:', error);
     res.status(500).json({ error: 'Error fetching course with lessons', details: error.message });
+  }
+};
+
+exports.updateLesson = async (req, res) => {
+  try {
+    const { courseId, lessonId, updateData } = req.body;
+
+    // Validate the course
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Find the lesson
+    const lesson = course.lessons.id(lessonId);
+    if (!lesson) {
+      return res.status(404).json({ message: 'Lesson not found' });
+    }
+
+    // Update the lesson with new data
+    Object.assign(lesson, updateData);
+
+    // Save the updated course
+    await course.save();
+
+    res.status(200).json({ message: 'Lesson updated successfully', lesson });
+  } catch (error) {
+    console.error('Error updating lesson:', error.message);
+    res.status(500).json({ error: 'Error updating lesson', details: error.message });
+  }
+};
+
+exports.deleteLesson = async (req, res) => {
+  try {
+    const { courseId, lessonId } = req.body;
+
+    // Validate the course
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Find the index of the lesson to be deleted
+    const lessonIndex = course.lessons.findIndex((lesson) => lesson._id.toString() === lessonId);
+    if (lessonIndex === -1) {
+      return res.status(404).json({ message: 'Lesson not found' });
+    }
+
+    // Remove the lesson from the array
+    course.lessons.splice(lessonIndex, 1);
+
+    // Save the updated course
+    await course.save();
+
+    res.status(200).json({ message: 'Lesson deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting lesson:', error.message);
+    res.status(500).json({ error: 'Error deleting lesson', details: error.message });
+  }
+};
+
+
+
+
+exports.updateQuizOrAssignment = async (req, res) => {
+  try {
+    const { courseId, lessonId, quizId, assignmentId, updateData } = req.body;
+
+    // Validate the course
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Find the lesson
+    const lesson = course.lessons.id(lessonId);
+    if (!lesson) {
+      return res.status(404).json({ message: 'Lesson not found' });
+    }
+
+    // Update Quiz
+    if (quizId) {
+      const quiz = lesson.quizzes.id(quizId);
+      if (!quiz) {
+        return res.status(404).json({ message: 'Quiz not found' });
+      }
+      Object.assign(quiz, updateData); // Update quiz fields
+    }
+
+    // Update Assignment
+    if (assignmentId) {
+      const assignment = lesson.assignments.id(assignmentId);
+      if (!assignment) {
+        return res.status(404).json({ message: 'Assignment not found' });
+      }
+      Object.assign(assignment, updateData); // Update assignment fields
+    }
+
+    // Save the updated course
+    await course.save();
+
+    res.status(200).json({ message: 'Updated successfully', course });
+  } catch (error) {
+    console.error('Error updating quiz or assignment:', error.message);
+    res.status(500).json({ error: 'Error updating quiz or assignment', details: error.message });
+  }
+};
+
+
+
+exports.deleteLessonQuiz = async (req, res) => {
+  try {
+    const { lessonId, quizId } = req.params;
+
+    // Validate IDs
+    if (!mongoose.Types.ObjectId.isValid(lessonId) || !mongoose.Types.ObjectId.isValid(quizId)) {
+      return res.status(400).json({ message: 'Invalid lessonId or quizId format.' });
+    }
+
+    // Find the lesson by ID
+    const lesson = await Lesson.findById(lessonId);
+    if (!lesson) {
+      return res.status(404).json({ message: 'Lesson not found.' });
+    }
+
+    // Remove the quiz by ID from the lesson's quizzes
+    const quiz = lesson.quizzes.id(quizId);
+    if (!quiz) {
+      return res.status(404).json({ message: 'Quiz not found.' });
+    }
+
+    quiz.remove();
+
+    // Save the updated lesson
+    await lesson.save();
+
+    res.status(200).json({
+      message: 'Quiz deleted successfully.',
+    });
+  } catch (error) {
+    console.error('Error deleting lesson quiz:', error.message);
+    res.status(500).json({
+      error: 'Error deleting lesson quiz.',
+      details: error.message,
+    });
+  }
+};
+exports.deleteQuizOrAssignment = async (req, res) => {
+  try {
+    const { courseId, lessonId, quizId, assignmentId } = req.body;
+
+    // Validate the course
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Find the lesson
+    const lesson = course.lessons.id(lessonId);
+    if (!lesson) {
+      return res.status(404).json({ message: 'Lesson not found' });
+    }
+
+    // Delete Quiz
+    if (quizId) {
+      const quizIndex = lesson.quizzes.findIndex((quiz) => quiz._id.toString() === quizId);
+      if (quizIndex === -1) {
+        return res.status(404).json({ message: 'Quiz not found' });
+      }
+      lesson.quizzes.splice(quizIndex, 1); // Remove the quiz
+    }
+
+    // Delete Assignment
+    if (assignmentId) {
+      const assignmentIndex = lesson.assignments.findIndex(
+        (assignment) => assignment._id.toString() === assignmentId
+      );
+      if (assignmentIndex === -1) {
+        return res.status(404).json({ message: 'Assignment not found' });
+      }
+      lesson.assignments.splice(assignmentIndex, 1); // Remove the assignment
+    }
+
+    // Save the updated course
+    await course.save();
+
+    res.status(200).json({ message: 'Deleted successfully', course });
+  } catch (error) {
+    console.error('Error deleting quiz or assignment:', error.message);
+    res.status(500).json({ error: 'Error deleting quiz or assignment', details: error.message });
+  }
+};
+exports.getQuizAndAssignmentCount = async (req, res) => {
+  try {
+    const { courseId, lessonId } = req.body;
+
+    // Validate the course
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Find the lesson
+    const lesson = course.lessons.id(lessonId);
+    if (!lesson) {
+      return res.status(404).json({ message: 'Lesson not found' });
+    }
+
+    // Get the count of quizzes and assignments
+    const quizCount = lesson.quizzes ? lesson.quizzes.length : 0;
+    const assignmentCount = lesson.assignments ? lesson.assignments.length : 0;
+
+    res.status(200).json({
+      message: 'Counts retrieved successfully',
+      quizCount,
+      assignmentCount,
+    });
+  } catch (error) {
+    console.error('Error fetching counts:', error.message);
+    res.status(500).json({ error: 'Error fetching counts', details: error.message });
+  }
+};
+
+
+exports.addQuizOrAssignment = async (req, res) => {
+  try {
+    const { courseId, lessonId, quiz, assignment } = req.body;
+
+    // Validate the course
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Find the lesson
+    const lesson = course.lessons.id(lessonId);
+    if (!lesson) {
+      return res.status(404).json({ message: 'Lesson not found' });
+    }
+
+    // Add Quiz
+    if (quiz) {
+      if (!quiz.question || !quiz.correctAnswer || !quiz.options || quiz.options.length < 2) {
+        return res.status(400).json({ message: 'Invalid quiz data. Ensure all fields are correct.' });
+      }
+      lesson.quizzes.push(quiz);
+    }
+
+    // Add Assignment
+    if (assignment) {
+      if (!assignment.title || !assignment.description) {
+        return res.status(400).json({ message: 'Invalid assignment data. Ensure all fields are correct.' });
+      }
+      lesson.assignments.push(assignment);
+    }
+
+    // Save the updated course
+    await course.save();
+
+    res.status(201).json({ message: 'Added successfully', lesson });
+  } catch (error) {
+    console.error('Error adding quiz or assignment:', error.message);
+    res.status(500).json({ error: 'Error adding quiz or assignment', details: error.message });
   }
 };

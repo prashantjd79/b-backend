@@ -8,7 +8,8 @@ router.post('/schedule-session', protect(['Mentor','Admin']), mentorController.s
 //router.post('/schedule-session', protect(['Admin','Mentor']), mentorController.scheduleSession);
 router.post('/grade-assignment', protect(['Mentor']), mentorController.gradeAssignment);
 // router.post('/create-assignment', protect(['Mentor']), mentorController.gradeAssignment);
-router.post('/lessons/:lessonId/assignments', protect(['Mentor']), mentorController.createAssignment);
+
+router.post('/add-assignment', protect(['Admin']), mentorController.addAssignment);
 
 
 module.exports = router;
