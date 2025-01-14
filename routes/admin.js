@@ -81,6 +81,7 @@ router.put('/update-quiz-or-assignment', protect(['Admin',' Mentor']),adminContr
 router.delete('/delete-quiz-or-assignment', protect(['Admin','Mentor']), adminController.deleteQuizOrAssignment);
 router.post('/get-quiz-assignment-count', protect(['Admin']),adminController.getQuizAndAssignmentCount);
 router.post('/add-quiz-or-assignment', protect(['Admin']), adminController.addQuizOrAssignment);
+router.get("/quiz/:quizId", adminController.getQuizById);
 
 // Update a course
 router.post('/create-course', protect(['Admin']), adminController.createCourse);

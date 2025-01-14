@@ -20,17 +20,17 @@ router.get('/courses',protect(['Student']),studentController.getCourses);
  router.get('/batches', protect(['Student']), studentController.getStudentBatches);
 router.get('/batch/:batchId', protect(['Student']), studentController.getBatchDetails);
 router.get('/transactions', protect(['Student']), studentController.getStudentTransactions);
+router.get('/check-evoscore/:studentId', protect(['Student']), studentController.getEvoScore);
 
-
-
+router.post('/submit-quiz-assignment', protect(['Student']), studentController.submitQuizAndAssignment);
 // Route for submitting assignments
-router.post('/submit-assignment', studentController.submitAssignment);
+//router.post('/submit-assignment', studentController.submitAssignment);
 
 // Route for submitting quizzes
-router.post('/submit-quiz', studentController.submitQuiz);
+//router.post('/submit-quiz', studentController.submitQuiz);
 
 // Route for fetching EvoScore
-router.get('/:studentId/evo-score', studentController.getEvoScore);
+//router.get('/:studentId/evo-score', studentController.getEvoScore);
 
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 

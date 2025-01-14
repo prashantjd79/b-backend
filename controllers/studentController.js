@@ -4,6 +4,7 @@ const Batch = require('../models/Batch');
 const Job=require('../models/Job');
 const PromoCode = require('../models/PromoCode');
 const Transaction = require('../models/Transaction');
+const calculateEvoScore = require('../utils/evoScoreCalculator');
 
 exports.enrollInCourse = async (req, res) => {
   try {
@@ -410,110 +411,327 @@ exports.getStudentTransactions = async (req, res) => {
 
 
  
-// Controller function to handle assignment submission
-exports.submitAssignment = async (req, res) => {
+// // Controller function to handle assignment submission
+// exports.submitAssignment = async (req, res) => {
+//   try {
+//     const { studentId, courseId, lessonId, assignmentId, answers } = req.body;
+
+//     // Ensure the course exists
+//     const course = await Course.findById(courseId);
+//     if (!course) {
+//       return res.status(400).json({ message: "Course not found" });
+//     }
+
+//     // Find the specific lesson and assignment
+//     const lesson = course.lessons.find(lesson => lesson.lessonId === lessonId);
+//     if (!lesson) {
+//       return res.status(400).json({ message: "Lesson not found" });
+//     }
+
+//     const assignment = lesson.assignments.find(assignment => assignment._id.toString() === assignmentId);
+//     if (!assignment) {
+//       return res.status(400).json({ message: "Assignment not found" });
+//     }
+
+//     // Process the answers and calculate the score (modify as needed)
+//     const score = calculateScore(answers, lesson.quizzes);  // Call the function to calculate the score
+
+//     // Find the student and update their assignment submission
+//     const student = await User.findById(studentId);
+//     if (!student) {
+//       return res.status(400).json({ message: "Student not found" });
+//     }
+
+//     // Update student's submission (add new submission record)
+//     student.assignmentsSubmitted.push({
+//       assignmentId,
+//       answers,
+//       score,
+//       submissionDate: new Date(),
+//     });
+
+//     await student.save();  // Save the student data
+
+//     return res.status(200).json({
+//       message: "Assignment submitted successfully",
+//       student,  // Returning the updated student
+//     });
+//   } catch (error) {
+//     console.error('Error submitting assignment:', error);
+//     return res.status(500).json({ message: "Error submitting assignment", error });
+//   }
+// };
+
+// // Helper function to calculate the score based on answers
+// const calculateScore = (answers, quizzes) => {
+//   let score = 0;
+//   quizzes.forEach((quiz, index) => {
+//     if (answers[index] === quiz.correctAnswer) {
+//       score += 10;  // Add points for each correct answer (adjust as needed)
+//     }
+//   });
+//   return score;
+// };
+
+// exports.submitQuiz = async (req, res) => {
+//   try {
+//     const { studentId, quizId, answers } = req.body; // Collect answers submitted by student
+
+//     const quiz = await Quiz.findById(quizId);
+
+//     let score = 0;
+//     // Check answers and calculate score
+//     answers.forEach((answer, index) => {
+//       if (answer === quiz.correctAnswers[index]) {
+//         score += 10; // 10 points for each correct answer
+//       }
+//     });
+
+//     // Update the student's EvoScore
+//     const student = await User.findById(studentId);
+//     student.evoScore += score; // Increment the student's score
+//     await student.save();
+
+//     res.status(200).json({
+//       message: 'Quiz submitted successfully.',
+//       evoScore: student.evoScore,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ message: 'Error submitting quiz.', error });
+//   }
+// };
+
+// exports.getEvoScore = async (req, res) => {
+//   try {
+//     const { studentId } = req.params;
+
+//     const student = await User.findById(studentId);
+//     if (!student) {
+//       return res.status(404).json({ message: 'Student not found' });
+//     }
+
+//     res.status(200).json({
+//       message: 'Student EvoScore fetched successfully.',
+//       evoScore: student.evoScore,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ message: 'Error fetching EvoScore.', error });
+//   }
+// };
+const Submission = require('../models/Submission');
+
+// exports.submitQuizAndAssignment = async (req, res) => {
+//   try {
+//     const { 
+//       studentId, 
+//       courseId, 
+//       lessonId, 
+//       quizId, 
+//       assignmentId, 
+//       submittedQuizAnswers, 
+//       assignmentSubmission 
+//     } = req.body;
+
+//     // Validate student
+//     const student = await User.findById(studentId);
+//     if (!student) {
+//       return res.status(404).json({ message: 'Student not found' });
+//     }
+
+//     // Fetch the course and validate the lesson
+//     const course = await Course.findById(courseId);
+//     if (!course) {
+//       return res.status(404).json({ message: 'Course not found' });
+//     }
+
+//     const lesson = course.lessons.find((l) => l._id.toString() === lessonId);
+//     if (!lesson) {
+//       return res.status(404).json({ message: 'Lesson not found in this course' });
+//     }
+
+//     // Fetch the quiz and validate
+//     const quiz = lesson.quizzes.find((q) => q._id.toString() === quizId);
+//     if (!quiz) {
+//       return res.status(404).json({ message: 'Quiz not found in this lesson' });
+//     }
+
+//     // Validate assignment
+//     const assignment = lesson.assignments.find((a) => a._id.toString() === assignmentId);
+//     if (!assignment) {
+//       return res.status(404).json({ message: 'Assignment not found in this lesson' });
+//     }
+
+//     // Calculate quiz scores
+//     let correctAnswers = 0;
+//     quiz.questions.forEach((question, index) => {
+//       if (submittedQuizAnswers[index] === question.correctAnswer) {
+//         correctAnswers++;
+//       }
+//     });
+//     const totalQuestions = quiz.questions.length;
+
+//     // Validate assignment submission (Manual Review Ready)
+//     const assignmentDetails = {
+//       completed: assignmentSubmission?.completed || false,
+//       submissionText: assignmentSubmission?.submissionText || '', // Assignment content
+//       submissionURL: assignmentSubmission?.submissionURL || '',  // Supporting file/project link
+//       reviewed: false,  // Assignment is pending review
+//       grade: null,      // Grade to be assigned during review
+//       feedback: '',     // Feedback to be provided during review
+//     };
+
+//     // Save or update submission
+//     let submission = await Submission.findOne({ studentId, courseId, lessonId });
+//     if (!submission) {
+//       submission = new Submission({
+//         studentId,
+//         courseId,
+//         lessonId,
+//         quiz: {
+//           correctAnswers,
+//           totalQuestions,
+//         },
+//         assignment: assignmentDetails,
+//       });
+//     } else {
+//       // Update existing submission
+//       submission.quiz.correctAnswers = correctAnswers;
+//       submission.quiz.totalQuestions = totalQuestions;
+//       submission.assignment = { ...submission.assignment, ...assignmentDetails };
+//     }
+
+//     await submission.save();
+
+//     // Automatically recalculate EvoScore
+//     const newEvoScore = await calculateEvoScore(studentId);
+
+//     // Update the student's EvoScore
+//     student.evoScore = newEvoScore;
+//     await student.save();
+
+//     res.status(200).json({
+//       message: 'Submission recorded and EvoScore updated successfully',
+//       submission,
+//       evoScore: newEvoScore,
+//     });
+//   } catch (error) {
+//     console.error('Error submitting quiz and assignment:', error.message);
+//     res.status(500).json({ error: 'Error submitting quiz and assignment', details: error.message });
+//   }
+// };
+exports.submitQuizAndAssignment = async (req, res) => {
   try {
-    const { studentId, courseId, lessonId, assignmentId, answers } = req.body;
+    const { studentId, courseId, lessonId, quizId, assignmentId, submittedQuizAnswers, assignmentSubmission } = req.body;
 
-    // Ensure the course exists
-    const course = await Course.findById(courseId);
-    if (!course) {
-      return res.status(400).json({ message: "Course not found" });
-    }
-
-    // Find the specific lesson and assignment
-    const lesson = course.lessons.find(lesson => lesson.lessonId === lessonId);
-    if (!lesson) {
-      return res.status(400).json({ message: "Lesson not found" });
-    }
-
-    const assignment = lesson.assignments.find(assignment => assignment._id.toString() === assignmentId);
-    if (!assignment) {
-      return res.status(400).json({ message: "Assignment not found" });
-    }
-
-    // Process the answers and calculate the score (modify as needed)
-    const score = calculateScore(answers, lesson.quizzes);  // Call the function to calculate the score
-
-    // Find the student and update their assignment submission
-    const student = await User.findById(studentId);
-    if (!student) {
-      return res.status(400).json({ message: "Student not found" });
-    }
-
-    // Update student's submission (add new submission record)
-    student.assignmentsSubmitted.push({
-      assignmentId,
-      answers,
-      score,
-      submissionDate: new Date(),
-    });
-
-    await student.save();  // Save the student data
-
-    return res.status(200).json({
-      message: "Assignment submitted successfully",
-      student,  // Returning the updated student
-    });
-  } catch (error) {
-    console.error('Error submitting assignment:', error);
-    return res.status(500).json({ message: "Error submitting assignment", error });
-  }
-};
-
-// Helper function to calculate the score based on answers
-const calculateScore = (answers, quizzes) => {
-  let score = 0;
-  quizzes.forEach((quiz, index) => {
-    if (answers[index] === quiz.correctAnswer) {
-      score += 10;  // Add points for each correct answer (adjust as needed)
-    }
-  });
-  return score;
-};
-
-exports.submitQuiz = async (req, res) => {
-  try {
-    const { studentId, quizId, answers } = req.body; // Collect answers submitted by student
-
-    const quiz = await Quiz.findById(quizId);
-
-    let score = 0;
-    // Check answers and calculate score
-    answers.forEach((answer, index) => {
-      if (answer === quiz.correctAnswers[index]) {
-        score += 10; // 10 points for each correct answer
-      }
-    });
-
-    // Update the student's EvoScore
-    const student = await User.findById(studentId);
-    student.evoScore += score; // Increment the student's score
-    await student.save();
-
-    res.status(200).json({
-      message: 'Quiz submitted successfully.',
-      evoScore: student.evoScore,
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Error submitting quiz.', error });
-  }
-};
-
-exports.getEvoScore = async (req, res) => {
-  try {
-    const { studentId } = req.params;
-
+    // Validate student
     const student = await User.findById(studentId);
     if (!student) {
       return res.status(404).json({ message: 'Student not found' });
     }
 
+    // Fetch the course and validate the lesson
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    const lesson = course.lessons.find((l) => l._id.toString() === lessonId);
+    if (!lesson) {
+      return res.status(404).json({ message: 'Lesson not found in this course' });
+    }
+
+    // Fetch the quiz and validate
+    const quiz = lesson.quizzes.find((q) => q._id.toString() === quizId);
+    if (!quiz) {
+      return res.status(404).json({ message: 'Quiz not found in this lesson' });
+    }
+
+    // Validate assignment
+    const assignmentExists = lesson.assignments.some((assignment) => assignment._id.toString() === assignmentId);
+    if (!assignmentExists) {
+      return res.status(404).json({ message: 'Assignment not found in this lesson' });
+    }
+
+    // Calculate quiz scores
+    let correctAnswers = 0;
+    quiz.questions.forEach((question, index) => {
+      if (question.correctAnswer === submittedQuizAnswers[index]) {
+        correctAnswers++;
+      }
+    });
+    const totalQuestions = quiz.questions.length;
+
+    // Validate assignment submission
+    const assignmentCompleted = assignmentSubmission?.completed || false;
+
+    // Save or update submission
+    let submission = await Submission.findOne({ studentId, courseId, lessonId });
+    if (!submission) {
+      submission = new Submission({
+        studentId,
+        courseId,
+        lessonId,
+        quiz: {
+          correctAnswers,
+          totalQuestions,
+        },
+        assignment: {
+          completed: assignmentCompleted,
+          submissionURL: assignmentSubmission?.submissionURL || '',
+        },
+      });
+    } else {
+      // Update existing submission
+      submission.quiz.correctAnswers = correctAnswers;
+      submission.quiz.totalQuestions = totalQuestions;
+      submission.assignment.completed = assignmentCompleted;
+      submission.assignment.submissionURL = assignmentSubmission?.submissionURL || '';
+    }
+
+    await submission.save();
+
+    // Automatically recalculate EvoScore
+    await calculateEvoScore(studentId);
+
     res.status(200).json({
-      message: 'Student EvoScore fetched successfully.',
+      message: 'Submission recorded successfully',
+      submission,
+    });
+  } catch (error) {
+    console.error('Error submitting quiz and assignment:', error.message);
+    res.status(500).json({ error: 'Error submitting quiz and assignment', details: error.message });
+  }
+};
+
+
+exports.getEvoScore = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+
+    // Validate the student
+    const student = await User.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    // Respond with the student's EvoScore
+    res.status(200).json({
+      message: 'EvoScore retrieved successfully',
+      studentId: student._id,
+      name: student.name, // Include student name if available
       evoScore: student.evoScore,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching EvoScore.', error });
+    console.error('Error fetching EvoScore:', error.message);
+    res.status(500).json({ error: 'Error fetching EvoScore', details: error.message });
   }
 };
+
+
+
+
+
+
+
+
+

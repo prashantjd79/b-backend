@@ -136,6 +136,7 @@ const userSchema = new mongoose.Schema(
     // Common fields for all roles
     name: { type: String, required: true },
     email: { type: String, unique: true, required: true },
+    evoScore: { type: Number, default: 0 }, 
     password: { type: String, select: false }, // Optional password for OAuth users
     role: {
       type: String,

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+
 const courseSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, unique: true },
@@ -14,26 +15,31 @@ const courseSchema = new mongoose.Schema(
     discountedPrice: { type: Number },
     lessons: [
       {
-        title: { type: String, required: true }, // Lesson Title
-        description: { type: String }, // Lesson Description
+        title: { type: String, required: true },
+        description: { type: String },
         videos: [
           {
-            title: { type: String, required: true }, // Video Title
-            videoURL: { type: String, required: true }, // Video URL
+            title: { type: String, required: true },
+            videoURL: { type: String, required: true },
           },
         ],
         quizzes: [
           {
-            question: { type: String, required: true }, // Quiz Question
-            options: [{ type: String, required: true }], // Quiz Options
-            correctAnswer: { type: String, required: true }, // Correct Answer
+            _id: { type: mongoose.Schema.Types.ObjectId, default: mongoose.Types.ObjectId },
+            questions: [
+              {
+                question: { type: String, required: true },
+                options: [{ type: String, required: true }],
+                correctAnswer: { type: String, required: true },
+              },
+            ],
           },
         ],
         assignments: [
           {
-            title: { type: String, required: true }, // Assignment Title
-            description: { type: String }, // Assignment Description
-            submissionURL: { type: String }, // Submission URL
+            title: { type: String, required: true },
+            description: { type: String },
+            submissionURL: { type: String },
           },
         ],
       },

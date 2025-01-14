@@ -1,4 +1,7 @@
 const Session = require('../models/Session');
+const Submission = require('../models/Submission'); // Correct path to your Submission model
+const calculateEvoScore = require('../utils/evoScoreCalculator'); // Adjust the path based on your folder structure
+const User = require('../models/User'); // Adjust the path to your User model if needed
 
 const Batch = require('../models/Batch');
 const Course = require('../models/Course'); // Import the Course model
@@ -94,4 +97,58 @@ exports.addAssignment = async (req, res) => {
   };
 
 
- 
+  exports.getAssignmentSubmission = async (req, res) => {
+    try {
+      const { submissionId } = req.params;
+  
+      const submission = await Submission.findById(submissionId);
+      if (!submission) {
+        return res.status(404).json({ message: 'Submission not found' });
+      }
+  
+      res.status(200).json({
+        message: 'Assignment submission retrieved successfully',
+        assignment: submission.assignment,
+        quiz: submission.quiz, // Optionally include quiz details for reference
+      });
+    } catch (error) {
+      console.error('Error fetching assignment submission:', error.message);
+      res.status(500).json({ error: 'Error fetching assignment submission', details: error.message });
+    }
+  };
+  exports.reviewAssignment = async (req, res) => {
+    try {
+      const { submissionId, grade, feedback } = req.body;
+  
+      const submission = await Submission.findById(submissionId);
+      if (!submission) {
+        return res.status(404).json({ message: 'Submission not found' });
+      }
+  
+      // Update assignment review details
+      submission.assignment.reviewed = true;
+      submission.assignment.grade = grade;
+      submission.assignment.feedback = feedback;
+      submission.assignment.completed = true;
+  
+      await submission.save();
+  
+      // Automatically recalculate EvoScore after review
+      const newEvoScore = await calculateEvoScore(submission.studentId);
+  
+      // Update the student's EvoScore
+      const student = await User.findById(submission.studentId);
+      student.evoScore = newEvoScore;
+      await student.save();
+  
+      res.status(200).json({
+        message: 'Assignment reviewed successfully and EvoScore updated',
+        submission,
+        evoScore: newEvoScore,
+      });
+    } catch (error) {
+      console.error('Error reviewing assignment:', error.message);
+      res.status(500).json({ error: 'Error reviewing assignment', details: error.message });
+    }
+  };
+  

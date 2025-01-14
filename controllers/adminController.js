@@ -1525,60 +1525,47 @@ exports.updateCourse = async (req, res) => {
     res.status(500).json({ error: 'Error updating course', details: error.message });
   }
 };
-
-
 exports.createLesson = async (req, res) => {
   try {
     const { courseId, title, description, videos, quizzes, assignments } = req.body;
 
-    // Validate the course
+    // Validate course
     const course = await Course.findById(courseId);
     if (!course) {
       return res.status(404).json({ message: 'Course not found' });
     }
 
-    // Validate videos
-    if (videos && videos.length > 0) {
-      for (const video of videos) {
-        if (!video.title || !video.videoURL) {
-          return res.status(400).json({
-            message: 'Each video must have a title and videoURL',
-            invalidVideo: video,
-          });
-        }
-      }
-    }
-
     // Validate quizzes
-    if (quizzes && quizzes.length > 0) {
-      for (const quiz of quizzes) {
-        if (!quiz.question || !quiz.correctAnswer || !quiz.options || quiz.options.length < 2) {
-          return res.status(400).json({
-            message: 'Each quiz must have a question, correct answer, and at least two options',
-            invalidQuiz: quiz,
-          });
-        }
-      }
+    if (quizzes) {
+      quizzes.forEach((quiz) => {
+        quiz.questions.forEach((question) => {
+          if (!question.question || !question.correctAnswer || question.options.length < 2) {
+            throw new Error('Each quiz must have a question, correct answer, and at least two options');
+          }
+        });
+      });
     }
 
-    // Add the lesson to the course
+    // Create a new lesson
     const newLesson = {
       title,
       description,
-      videos: videos || [],
-      quizzes: quizzes || [],
-      assignments: assignments || [],
+      videos,
+      quizzes: quizzes.map((quiz) => ({
+        _id: new mongoose.Types.ObjectId(),
+        questions: quiz.questions,
+      })),
+      assignments,
     };
 
+    // Add the lesson to the course
     course.lessons.push(newLesson);
-
-    // Save the updated course
     await course.save();
 
     res.status(201).json({ message: 'Lesson created successfully', lesson: newLesson });
   } catch (error) {
     console.error('Error creating lesson:', error.message);
-    res.status(500).json({ error: 'Error creating lesson', details: error.message });
+    res.status(400).json({ error: 'Error creating lesson', details: error.message });
   }
 };
 
@@ -1954,5 +1941,34 @@ exports.deletePath = async (req, res) => {
   } catch (error) {
     console.error('Error deleting path:', error.message);
     res.status(500).json({ error: 'Error deleting path', details: error.message });
+  }
+};
+exports.getQuizById = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+
+    // Find the course containing the quiz
+    const course = await Course.findOne({ "lessons.quizzes._id": quizId });
+
+    if (!course) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    // Locate the lesson and quiz
+    const lesson = course.lessons.find(lesson =>
+      lesson.quizzes.some(quiz => quiz._id.toString() === quizId)
+    );
+
+    const quiz = lesson.quizzes.find(quiz => quiz._id.toString() === quizId);
+
+    res.status(200).json({
+      quizId: quiz._id,
+      questions: quiz.questions,
+      lessonTitle: lesson.title,
+      courseName: course.name,
+    });
+  } catch (error) {
+    console.error("Error fetching quiz:", error.message);
+    res.status(500).json({ error: "Error fetching quiz" });
   }
 };

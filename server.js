@@ -61,6 +61,8 @@ app.use('/creator', creatorRoutes);
 app.use('/employer', employerRoutes);
 app.use('/support',supportRoutes)
 app.use('/path', pathRoutes);
+
+
 // Welcome route
 app.get('/', (req, res) => {
   res.send('Welcome to the backendd API');

@@ -10,6 +10,9 @@ router.post('/grade-assignment', protect(['Mentor']), mentorController.gradeAssi
 // router.post('/create-assignment', protect(['Mentor']), mentorController.gradeAssignment);
 
 router.post('/add-assignment', protect(['Admin']), mentorController.addAssignment);
+router.get('/view-assignment/:submissionId', protect(['Admin']), mentorController.getAssignmentSubmission);
+router.post('/review-assignment', mentorController.reviewAssignment);
+
 
 
 module.exports = router;
