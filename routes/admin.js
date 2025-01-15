@@ -97,7 +97,7 @@ router.post('/create-path', protect(['Admin']), adminController.createPath);
 router.get('/path/:pathId', protect(['Admin']), adminController.getPath);
 router.put('/update-path', protect(['Admin']), adminController.updatePath);
 router.delete('/path/:pathId', protect(['Admin']), adminController.deletePath);
-
+router.get('/courses', protect(['Admin']), adminController.getAllCourses);
 module.exports = router;
 
 

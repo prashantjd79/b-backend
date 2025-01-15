@@ -1972,3 +1972,26 @@ exports.getQuizById = async (req, res) => {
     res.status(500).json({ error: "Error fetching quiz" });
   }
 };
+
+
+exports.getAllCourses = async (req, res) => {
+  try {
+    // Fetch all courses from the database
+    const courses = await Course.find({})
+      .populate('category', 'name') // Populate category field (only name)
+      .populate('subcategory', 'name') // Populate subcategory field (only name)
+      .populate('mentorAssigned', 'name email') // Populate mentor details
+      .populate('managerAssigned', 'name email'); // Populate manager details
+
+    res.status(200).json({
+      message: 'All courses fetched successfully',
+      courses,
+    });
+  } catch (error) {
+    console.error('Error fetching courses:', error.message);
+    res.status(500).json({
+      error: 'Error fetching courses',
+      details: error.message,
+    });
+  }
+};
