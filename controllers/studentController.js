@@ -6,7 +6,7 @@ const Job=require('../models/Job');
 const PromoCode = require('../models/PromoCode');
 const Transaction = require('../models/Transaction');
 const calculateEvoScore = require('../utils/evoScoreCalculator');
-
+const Category = require('../models/Category');
 
 const bcrypt = require('bcrypt');
 
@@ -974,5 +974,29 @@ exports.getAvailableJobs = async (req, res) => {
   } catch (error) {
     console.error('❌ Error fetching jobs:', error);
     res.status(500).json({ message: 'Error fetching jobs' });
+  }
+};
+exports.getCategories = async (req, res) => {
+  try {
+    console.log('🔍 Fetching available categories for student...');
+    console.log('🆔 Decoded Token User ID:', req.user.id);
+
+    // Fetch all categories from the database
+    const categories = await Category.find().select('-__v');
+
+    // Log the fetched categories
+    console.log('📋 Fetched Categories:', categories);
+
+    if (!categories || categories.length === 0) {
+      console.log('⚠️ No categories found in the database.');
+      return res.status(404).json({ message: 'No categories available at the moment' });
+    }
+
+    console.log('✅ Returning categories to the student.');
+    res.status(200).json({ categories });
+
+  } catch (error) {
+    console.error('❌ Error fetching categories:', error);
+    res.status(500).json({ message: 'Error fetching categories' });
   }
 };

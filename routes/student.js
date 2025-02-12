@@ -37,6 +37,9 @@ router.post('/enroll-path', protect(['Student']), studentController.enrollInPath
 router.get('/enrolled-path', protect(['Student']), studentController.getEnrolledPath);
 router.get("/batches", protect(["Student"]), studentController.getStudentBatches);
 router.get('/jobs', protect(['Student']), studentController.getAvailableJobs);
+router.get('/categories', protect(['Student']), studentController.getCategories);
+
+
 
 
 
