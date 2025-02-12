@@ -38,7 +38,10 @@ router.get('/enrolled-path', protect(['Student']), studentController.getEnrolled
 router.get("/batches", protect(["Student"]), studentController.getStudentBatches);
 router.get('/jobs', protect(['Student']), studentController.getAvailableJobs);
 router.get('/categories', protect(['Student']), studentController.getCategories);
+router.get('/paths', protect(['Student']), studentController.getAllPaths);
 
+// ✅ Get All Blogs
+router.get('/blogs', protect(['Student']), studentController.getAllBlogs);
 
 
 

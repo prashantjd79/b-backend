@@ -19,6 +19,48 @@ const mongoose = require("mongoose");
 
 
 
+
+const Blog = require('../models/Blog'); // Ensure correct model path
+
+// 📌 Fetch All Learning Paths
+exports.getAllPaths = async (req, res) => {
+  try {
+    console.log("📌 Fetching all learning paths...");
+
+    const paths = await Path.find({}); // Fetch all paths from database
+
+    if (!paths.length) {
+      return res.status(404).json({ message: "No paths found" });
+    }
+
+    console.log("✅ Paths Fetched:", paths.length);
+    res.status(200).json({ paths });
+  } catch (error) {
+    console.error("❌ Error fetching paths:", error.message);
+    res.status(500).json({ message: "Error fetching paths", error: error.message });
+  }
+};
+
+// 📌 Fetch All Blogs
+exports.getAllBlogs = async (req, res) => {
+  try {
+    console.log("📌 Fetching all blogs...");
+
+    const blogs = await Blog.find({}); // Fetch all blogs from database
+
+    if (!blogs.length) {
+      return res.status(404).json({ message: "No blogs available" });
+    }
+
+    console.log("✅ Blogs Fetched:", blogs.length);
+    res.status(200).json({ blogs });
+  } catch (error) {
+    console.error("❌ Error fetching blogs:", error.message);
+    res.status(500).json({ message: "Error fetching blogs", error: error.message });
+  }
+};
+
+
 exports.enrollInCourse = async (req, res) => {
   try {
     const { courseId } = req.body;
@@ -759,11 +801,44 @@ exports.getEvoScore = async (req, res) => {
 
 
 
+// exports.studentSignup = async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
+
+//     // Check if email is already in use
+//     const existingUser = await User.findOne({ email });
+//     if (existingUser) {
+//       return res.status(400).json({ message: 'Email already registered' });
+//     }
+
+//     // Hash password before saving
+//     const hashedPassword = await bcrypt.hash(password, 12);
+
+//     // Create new user with role 'Student'
+//     const newUser = new User({
+//       email,
+//       password: hashedPassword,
+//       role: 'Student'
+//     });
+
+//     await newUser.save();
+//     res.status(201).json({ message: 'Signup successful' });
+//   } catch (error) {
+//     console.error('Signup error:', error);
+//     res.status(500).json({ message: 'Error signing up', error: error.message });
+//   }
+// };
+
+
+
+
 exports.studentSignup = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    console.log("Received Signup Request:", req.body);
 
-    // Check if email is already in use
+    const { email, password, dob, contactNumber, education, interests, wannaBe, experience } = req.body;
+
+    // Check if email already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'Email already registered' });
@@ -772,20 +847,29 @@ exports.studentSignup = async (req, res) => {
     // Hash password before saving
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create new user with role 'Student'
+    // Create new user with additional details
     const newUser = new User({
       email,
       password: hashedPassword,
-      role: 'Student'
+      role: 'Student',
+      dob,
+      contactNumber,
+      education, // Array of education details
+      interests, // Array of student interests
+      wannaBe, // Career aspiration
+      experience, // Array of experience details
     });
 
     await newUser.save();
-    res.status(201).json({ message: 'Signup successful' });
+    console.log("✅ Student Registered:", newUser);
+
+    res.status(201).json({ message: 'Signup successful', user: newUser });
   } catch (error) {
-    console.error('Signup error:', error);
+    console.error("❌ Signup error:", error.message);
     res.status(500).json({ message: 'Error signing up', error: error.message });
   }
 };
+
 
 exports.studentLogin = async (req, res) => {
   try {
