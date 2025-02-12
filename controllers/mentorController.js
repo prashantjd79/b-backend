@@ -151,4 +151,36 @@ exports.addAssignment = async (req, res) => {
       res.status(500).json({ error: 'Error reviewing assignment', details: error.message });
     }
   };
-  
+
+
+
+// 📌 Fetch All Submissions with Student Info
+exports.getAllSubmissions = async (req, res) => {
+  try {
+    console.log("📌 Fetching all submissions with student details...");
+
+    // Populate student details (student ID & name)
+    const submissions = await Submission.find()
+      .populate('studentId', 'name email') // Fetch Student Name & Email
+      .select('_id studentId submittedAt status'); // Select relevant fields
+
+    if (!submissions.length) {
+      return res.status(404).json({ message: "No submissions found" });
+    }
+
+    // Formatting Response
+    const formattedSubmissions = submissions.map(sub => ({
+      submissionId: sub._id,
+      student: sub.studentId ? { id: sub.studentId._id, name: sub.studentId.name, email: sub.studentId.email } : null,
+      submittedAt: sub.submittedAt,
+      status: sub.status
+    }));
+
+    console.log("✅ Submissions Found:", formattedSubmissions.length);
+    res.status(200).json({ submissions: formattedSubmissions });
+  } catch (error) {
+    console.error("❌ Error fetching submissions:", error.message);
+    res.status(500).json({ message: "Error fetching submissions", error: error.message });
+  }
+};
+

@@ -80,7 +80,7 @@ router.delete('/delete-lesson', protect(['Admin']), adminController.deleteLesson
 router.put('/update-quiz-or-assignment', protect(['Admin',' Mentor']),adminController.updateQuizOrAssignment);
 router.delete('/delete-quiz-or-assignment', protect(['Admin','Mentor']), adminController.deleteQuizOrAssignment);
 router.post('/get-quiz-assignment-count', protect(['Admin']),adminController.getQuizAndAssignmentCount);
-router.post('/add-quiz-or-assignment', protect(['Admin']), adminController.addQuizOrAssignment);
+router.post('/add-quiz-or-assignment', protect(['Admin','Mentor']), adminController.addQuizOrAssignment);
 router.get("/quiz/:quizId", adminController.getQuizById);
 
 // Update a course
