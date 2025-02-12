@@ -5,6 +5,7 @@ const studentController = require('../controllers/studentController');
 const {applyToJob}=require('../controllers/studentController');
 
 
+
 router.post('/enroll', protect(['Student']), studentController.enrollInCourse);
 //router.post('/submit-assignment', protect(['Student']), studentController.submitAssignment);
 // router.get('/progress', protect(['Student']), studentController.viewProgress);
@@ -23,6 +24,22 @@ router.get('/transactions', protect(['Student']), studentController.getStudentTr
 router.get('/check-evoscore/:studentId', protect(['Student']), studentController.getEvoScore);
 
 router.post('/submit-quiz-assignment', protect(['Student']), studentController.submitQuizAndAssignment);
+
+
+
+// Authentication Routes
+
+router.post('/signup', studentController.studentSignup);
+router.post('/login', studentController.studentLogin);
+router.get('/profile', protect(), studentController.getStudentProfile);
+router.put("/update-enrollment/:userId", protect(["Student"]), studentController.updateEnrollment);
+
+// Route to fetch enrolled courses & paths
+router.get("/enrolled", protect(["Student"]), studentController.getEnrolledCoursesAndPaths);
+
+
+
+
 // Route for submitting assignments
 //router.post('/submit-assignment', studentController.submitAssignment);
 

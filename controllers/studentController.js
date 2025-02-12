@@ -1,10 +1,23 @@
 const Course = require('../models/Course');
-const User = require('../models/User');
+const User = require('../models/User'); // ✅ Ensure this is correct
+
 const Batch = require('../models/Batch');
 const Job=require('../models/Job');
 const PromoCode = require('../models/PromoCode');
 const Transaction = require('../models/Transaction');
 const calculateEvoScore = require('../utils/evoScoreCalculator');
+
+
+const bcrypt = require('bcrypt');
+
+const jwt = require('jsonwebtoken');
+
+
+const Path = require('../models/Path');
+
+const mongoose = require("mongoose");
+
+
 
 exports.enrollInCourse = async (req, res) => {
   try {
@@ -731,7 +744,162 @@ exports.getEvoScore = async (req, res) => {
 
 
 
+exports.studentSignup = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Check if email is already in use
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already registered' });
+    }
+
+    // Hash password before saving
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Create new user with role 'Student'
+    const newUser = new User({
+      email,
+      password: hashedPassword,
+      role: 'Student'
+    });
+
+    await newUser.save();
+    res.status(201).json({ message: 'Signup successful' });
+  } catch (error) {
+    console.error('Signup error:', error);
+    res.status(500).json({ message: 'Error signing up', error: error.message });
+  }
+};
+
+exports.studentLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Fetch user and ensure password is selected
+    const user = await User.findOne({ email }).select('+password');
+
+    if (!user) {
+      console.log("❌ User not found:", email);
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
+
+    console.log("🔒 Stored Hashed Password from DB:", user.password);
+    console.log("🔑 Entered Password:", password);
+
+    // Compare entered password with stored hash
+    const isMatch = await bcrypt.compare(password.trim(), user.password);
+    console.log("🔍 bcrypt.compare() result:", isMatch);
+
+    if (!isMatch) {
+      console.log("❌ Password comparison failed");
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
+
+    // Generate JWT Token
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    console.log("✅ Login successful! Token generated.");
+    res.json({ token, message: 'Login successful' });
+
+  } catch (error) {
+    console.error("❌ Login error:", error);
+    res.status(500).json({ message: 'Login error', error: error.message });
+  }
+};
+exports.getStudentProfile = async (req, res) => {
+  try {
+    const userId = req.user.userId; // Extract userId from token
+
+    // Find the student by ID and exclude password
+    const student = await User.findById(userId).select('-password');
+
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    res.status(200).json({ student });
+  } catch (error) {
+    console.error("❌ Error fetching student profile:", error);
+    res.status(500).json({ message: 'Error fetching profile', error: error.message });
+  }
+};
 
 
 
 
+
+
+
+
+
+
+
+
+exports.getEnrolledCoursesAndPaths = async (req, res) => {
+  try {
+    const userId = req.user.userId; // Extract user ID from the token
+
+    console.log("Decoded Token User ID:", userId);
+
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      console.error("❌ Invalid ObjectId format:", userId);
+      return res.status(400).json({ message: "Invalid user ID format" });
+    }
+
+    // Fetch student data
+    const student = await User.findById(userId)
+      .populate("coursesEnrolled", "name description")  // Fetch course details
+      .populate("roadmapEnrolled", "title description"); // Fetch roadmap details
+
+    if (!student) {
+      console.error("❌ Student not found");
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    console.log("✅ Fetched Student Data:", student);
+
+    res.status(200).json({
+      enrolledCourses: student.coursesEnrolled || [],
+      enrolledPath: student.roadmapEnrolled || {},
+    });
+  } catch (error) {
+    console.error("❌ Error fetching enrolled courses and paths:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+
+
+exports.updateEnrollment = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { coursesEnrolled, roadmapEnrolled } = req.body;
+
+    // Validate user existence
+    const student = await User.findById(userId);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    // Update student's enrolled courses and roadmap
+    student.coursesEnrolled = coursesEnrolled || student.coursesEnrolled;
+    student.roadmapEnrolled = roadmapEnrolled || student.roadmapEnrolled;
+    await student.save();
+
+    return res.status(200).json({
+      message: "Enrollment updated successfully",
+      enrolledCourses: student.coursesEnrolled,
+      enrolledPath: student.roadmapEnrolled
+    });
+  } catch (error) {
+    console.error("Error updating enrollment:", error);
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
+};
