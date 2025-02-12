@@ -23,27 +23,42 @@ exports.enrollInCourse = async (req, res) => {
   try {
     const { courseId } = req.body;
 
-    const course = await Course.findById(courseId).select('title price'); // Only fetch title and price
+    // 🔍 Validate course ID format
+    if (!courseId || !mongoose.Types.ObjectId.isValid(courseId)) {
+      return res.status(400).json({ message: "Invalid course ID format" });
+    }
+
+    // 🔍 Check if the course exists
+    const course = await Course.findById(courseId).select('title price');
     if (!course) {
       return res.status(404).json({ message: 'Course not found' });
     }
 
-    const student = await User.findById(req.user.id);
-    if (!student.enrolledCourses.includes(courseId)) {
-      student.enrolledCourses.push(courseId);
-      await student.save();
-    } else {
+    // 🔍 Find the student by ID from the decoded token
+    const student = await User.findById(req.user.userId);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    // 🔍 Check if already enrolled
+    if (student.coursesEnrolled.includes(courseId)) {
       return res.status(400).json({ message: 'Already enrolled in this course' });
     }
 
+    // ✅ Enroll the student
+    student.coursesEnrolled.push(courseId);
+    await student.save();
+
     res.status(200).json({
       message: 'Enrolled in course successfully',
-      course, // Only returns title and price
+      course, // Return course title and price
     });
   } catch (error) {
+    console.error("❌ Error enrolling in course:", error);
     res.status(500).json({ message: 'Error enrolling in course' });
   }
 };
+
 
 
 
@@ -840,66 +855,115 @@ exports.getStudentProfile = async (req, res) => {
 
 
 
-exports.getEnrolledCoursesAndPaths = async (req, res) => {
+exports.getEnrolledCourses = async (req, res) => {
   try {
-    const userId = req.user.userId; // Extract user ID from the token
-
-    console.log("Decoded Token User ID:", userId);
-
-    // Validate ObjectId format
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      console.error("❌ Invalid ObjectId format:", userId);
-      return res.status(400).json({ message: "Invalid user ID format" });
-    }
-
-    // Fetch student data
-    const student = await User.findById(userId)
-      .populate("coursesEnrolled", "name description")  // Fetch course details
-      .populate("roadmapEnrolled", "title description"); // Fetch roadmap details
+    const student = await User.findById(req.user.userId)
+      .populate('coursesEnrolled', 'title description') // Fetch only title & description
+      .select('coursesEnrolled'); // Only return enrolled courses
 
     if (!student) {
-      console.error("❌ Student not found");
-      return res.status(404).json({ message: "Student not found" });
+      return res.status(404).json({ message: 'Student not found' });
     }
 
-    console.log("✅ Fetched Student Data:", student);
+    res.status(200).json({ enrolledCourses: student.coursesEnrolled });
+  } catch (error) {
+    console.error("❌ Error fetching enrolled courses:", error);
+    res.status(500).json({ message: 'Error fetching enrolled courses' });
+  }
+};
+
+exports.enrollInPath = async (req, res) => {
+  try {
+    const { pathId } = req.body;
+
+    // Validate Path exists
+    const path = await Path.findById(pathId).select('title description');
+    if (!path) {
+      return res.status(404).json({ message: 'Path not found' });
+    }
+
+    // Find Student
+    const student = await User.findById(req.user.userId);
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    // Check if already enrolled
+    if (student.roadmapEnrolled && student.roadmapEnrolled.toString() === pathId) {
+      return res.status(400).json({ message: 'Already enrolled in this path' });
+    }
+
+    // Enroll in the path
+    student.roadmapEnrolled = pathId;
+    await student.save();
 
     res.status(200).json({
-      enrolledCourses: student.coursesEnrolled || [],
-      enrolledPath: student.roadmapEnrolled || {},
+      message: 'Successfully enrolled in the path',
+      path, // Returns only title and description
     });
   } catch (error) {
-    console.error("❌ Error fetching enrolled courses and paths:", error);
+    console.error("❌ Error enrolling in path:", error);
+    res.status(500).json({ message: 'Error enrolling in path' });
+  }
+};
+exports.getEnrolledPath = async (req, res) => {
+  try {
+    // Find Student & Populate Enrolled Path
+    const student = await User.findById(req.user.userId)
+      .populate('roadmapEnrolled', 'title description')
+      .select('roadmapEnrolled');
+
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    res.status(200).json({ enrolledPath: student.roadmapEnrolled || null });
+  } catch (error) {
+    console.error("❌ Error fetching enrolled path:", error);
+    res.status(500).json({ message: 'Error fetching enrolled path' });
+  }
+};
+
+
+exports.getStudentBatches = async (req, res) => {
+  try {
+    console.log("Decoded Token:", req.user); // Debugging
+
+    const userId = req.user.userId; // Ensure correct key
+
+    if (!userId) {
+      console.error("❌ Error: userId is undefined in token");
+      return res.status(400).json({ message: "Invalid token, userId not found" });
+    }
+
+    console.log("✅ Fetching batches for student ID:", userId);
+
+    // Find batches where the student is included in the 'students' array
+    const batches = await Batch.find({ students: userId }).populate("courseId", "name description");
+
+    if (!batches || batches.length === 0) {
+      return res.status(404).json({ message: "No batches found for this student" });
+    }
+
+    res.status(200).json({ batches });
+  } catch (error) {
+    console.error("❌ Error fetching student batches:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
 
-
-
-exports.updateEnrollment = async (req, res) => {
+exports.getAvailableJobs = async (req, res) => {
   try {
-    const { userId } = req.params;
-    const { coursesEnrolled, roadmapEnrolled } = req.body;
+    const jobs = await Job.find({ status: "Open" }).select("title description company location requirements");
 
-    // Validate user existence
-    const student = await User.findById(userId);
-    if (!student) {
-      return res.status(404).json({ message: "Student not found" });
+    if (!jobs || jobs.length === 0) {
+      return res.status(404).json({ message: "No jobs available at the moment" });
     }
 
-    // Update student's enrolled courses and roadmap
-    student.coursesEnrolled = coursesEnrolled || student.coursesEnrolled;
-    student.roadmapEnrolled = roadmapEnrolled || student.roadmapEnrolled;
-    await student.save();
-
-    return res.status(200).json({
-      message: "Enrollment updated successfully",
-      enrolledCourses: student.coursesEnrolled,
-      enrolledPath: student.roadmapEnrolled
-    });
+    res.status(200).json({ jobs });
   } catch (error) {
-    console.error("Error updating enrollment:", error);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    console.error("❌ Error fetching jobs:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };

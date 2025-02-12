@@ -19,6 +19,8 @@ const Path = require('../models/Path');
 
 
 
+
+
 exports.deleteManager = async (req, res) => {
   try {
     const { id } = req.params;

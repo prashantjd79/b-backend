@@ -32,10 +32,15 @@ router.post('/submit-quiz-assignment', protect(['Student']), studentController.s
 router.post('/signup', studentController.studentSignup);
 router.post('/login', studentController.studentLogin);
 router.get('/profile', protect(), studentController.getStudentProfile);
-router.put("/update-enrollment/:userId", protect(["Student"]), studentController.updateEnrollment);
+router.get('/enrolled', protect(['Student']), studentController.getEnrolledCourses);
+router.post('/enroll-path', protect(['Student']), studentController.enrollInPath);
+router.get('/enrolled-path', protect(['Student']), studentController.getEnrolledPath);
+router.get("/batches", protect(["Student"]), studentController.getStudentBatches);
+router.get("/jobs", protect(["Student"]), studentController.getAvailableJobs);
+
 
 // Route to fetch enrolled courses & paths
-router.get("/enrolled", protect(["Student"]), studentController.getEnrolledCoursesAndPaths);
+
 
 
 
