@@ -42,7 +42,7 @@ router.get('/paths', protect(['Student']), studentController.getAllPaths);
 
 // ✅ Get All Blogs
 router.get('/blogs', protect(['Student']), studentController.getAllBlogs);
-
+router.get('/sessions', protect(['Student']), studentController.getStudentSessions);
 
 
 

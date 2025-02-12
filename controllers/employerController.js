@@ -23,6 +23,70 @@ exports.createJob = async (req, res) => {
 };
 
 
+// 📌 Get All Jobs Created by Employer
+exports.getEmployerJobs = async (req, res) => {
+  try {
+    console.log(`📌 Fetching jobs for Employer ID: ${req.user.id}`);
+
+    const jobs = await Job.find({ employerId: req.user.id });
+
+    if (!jobs.length) {
+      return res.status(404).json({ message: 'No jobs found for this employer' });
+    }
+
+    res.status(200).json({ jobs });
+  } catch (error) {
+    console.error("❌ Error fetching jobs:", error);
+    res.status(500).json({ error: 'Error fetching jobs' });
+  }
+};
+
+// 📌 Update Job by ID
+exports.updateJob = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const { title, description, skillsRequired, location, salary, status } = req.body;
+
+    console.log(`📌 Updating Job ID: ${jobId} for Employer ID: ${req.user.id}`);
+
+    const job = await Job.findOneAndUpdate(
+      { _id: jobId, employerId: req.user.id },
+      { title, description, skillsRequired, location, salary, status },
+      { new: true, runValidators: true }
+    );
+
+    if (!job) {
+      return res.status(404).json({ message: 'Job not found or unauthorized' });
+    }
+
+    res.status(200).json({ message: 'Job updated successfully', job });
+  } catch (error) {
+    console.error("❌ Error updating job:", error);
+    res.status(500).json({ error: 'Error updating job' });
+  }
+};
+
+// 📌 Delete Job by ID
+exports.deleteJob = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+
+    console.log(`📌 Deleting Job ID: ${jobId} for Employer ID: ${req.user.id}`);
+
+    const job = await Job.findOneAndDelete({ _id: jobId, employerId: req.user.id });
+
+    if (!job) {
+      return res.status(404).json({ message: 'Job not found or unauthorized' });
+    }
+
+    res.status(200).json({ message: 'Job deleted successfully' });
+  } catch (error) {
+    console.error("❌ Error deleting job:", error);
+    res.status(500).json({ error: 'Error deleting job' });
+  }
+};
+
+
 exports.getStudents = async (req, res) => {
   try {
     const students = await User.find({ role: 'Student' }).select('name email resume');

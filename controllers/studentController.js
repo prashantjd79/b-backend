@@ -11,7 +11,7 @@ const Category = require('../models/Category');
 const bcrypt = require('bcrypt');
 
 const jwt = require('jsonwebtoken');
-
+const Session = require('../models/Session');
 
 const Path = require('../models/Path');
 
@@ -1082,5 +1082,51 @@ exports.getCategories = async (req, res) => {
   } catch (error) {
     console.error('❌ Error fetching categories:', error);
     res.status(500).json({ message: 'Error fetching categories' });
+  }
+};
+
+
+
+
+exports.getStudentSessions = async (req, res) => {
+  try {
+    console.log("📌 Full Decoded Token User:", req.user);
+
+    if (!req.user || !req.user.id) {
+      console.error("❌ Error: User ID is missing in request object.");
+      return res.status(401).json({ message: "Unauthorized: User ID not found in request." });
+    }
+
+    const studentId = req.user.id;
+    console.log("✅ Extracted Student ID:", studentId);
+
+    if (!mongoose.Types.ObjectId.isValid(studentId)) {
+      console.error("❌ Invalid Student ID Format:", studentId);
+      return res.status(400).json({ message: "Invalid user ID format" });
+    }
+
+    const studentObjectId = new mongoose.Types.ObjectId(studentId);
+    console.log("✅ Converted Student Object ID:", studentObjectId);
+
+    const sessions = await Session.find({ studentId: studentObjectId })
+      .populate("mentorId", "name email")
+      .populate("batchId", "name")
+      .exec();
+
+    console.log("🔍 Fetched Sessions:", sessions);
+
+    if (!sessions || sessions.length === 0) {
+      console.log("⚠️ No sessions found for this student.");
+      return res.status(404).json({ message: "No sessions found for this student" });
+    }
+
+    res.status(200).json({
+      message: "Sessions fetched successfully",
+      sessions,
+    });
+
+  } catch (error) {
+    console.error("❌ Error fetching student sessions:", error);
+    res.status(500).json({ message: "Error fetching student sessions", error: error.message });
   }
 };

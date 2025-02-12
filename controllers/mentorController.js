@@ -6,32 +6,56 @@ const User = require('../models/User'); // Adjust the path to your User model if
 const Batch = require('../models/Batch');
 const Course = require('../models/Course'); // Import the Course model
 // Assuming you have a Session model
+// exports.scheduleSession = async (req, res) => {
+//   try {
+//     const { studentId, batchId, topic, dateTime } = req.body;
+
+//     // Validate student and batch
+//     if (!studentId || !batchId || !topic || !dateTime) {
+//       return res.status(400).json({ message: 'All fields are required' });
+//     }
+
+//     // Save session in the database
+//     const session = new Session({
+//       studentId,
+//       batchId,
+//       topic,
+//       dateTime,
+//     });
+
+//     await session.save();
+
+//     res.status(201).json({ message: 'Session scheduled successfully', session });
+//   } catch (error) {
+//     console.error('Error scheduling session:', error.message);
+//     res.status(500).json({ message: 'Server error: Unable to schedule session' });
+//   }
+// };
+
 exports.scheduleSession = async (req, res) => {
   try {
     const { studentId, batchId, topic, dateTime } = req.body;
 
-    // Validate student and batch
     if (!studentId || !batchId || !topic || !dateTime) {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
-    // Save session in the database
     const session = new Session({
       studentId,
       batchId,
       topic,
       dateTime,
+      mentorId: req.user.id // ✅ Save Mentor ID
     });
 
     await session.save();
 
     res.status(201).json({ message: 'Session scheduled successfully', session });
   } catch (error) {
-    console.error('Error scheduling session:', error.message);
+    console.error('❌ Error scheduling session:', error.message);
     res.status(500).json({ message: 'Server error: Unable to schedule session' });
   }
 };
-
 
 
 
