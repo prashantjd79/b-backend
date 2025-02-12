@@ -11,7 +11,7 @@ router.post('/grade-assignment', protect(['Mentor']), mentorController.gradeAssi
 
 router.post('/add-assignment', protect(['Admin']), mentorController.addAssignment);
 router.get('/view-assignment/:submissionId', protect(['Admin','Mentor']), mentorController.getAssignmentSubmission);
-router.post('/review-assignment', mentorController.reviewAssignment);
+router.post('/review-assignment',protect(['Mentor']), mentorController.reviewAssignment);
 
 
 
