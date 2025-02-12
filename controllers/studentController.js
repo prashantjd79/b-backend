@@ -955,15 +955,24 @@ exports.getStudentBatches = async (req, res) => {
 
 exports.getAvailableJobs = async (req, res) => {
   try {
-    const jobs = await Job.find({ status: "Open" }).select("title description company location requirements");
+
+
+    // Fetch only active jobs
+    const jobs = await Job.find({ status: 'Active' }).select('-__v');
+
+    // Log the fetched jobs
+    
 
     if (!jobs || jobs.length === 0) {
-      return res.status(404).json({ message: "No jobs available at the moment" });
+     
+      return res.status(404).json({ message: 'No jobs available at the moment' });
     }
 
+    
     res.status(200).json({ jobs });
+
   } catch (error) {
-    console.error("❌ Error fetching jobs:", error);
-    res.status(500).json({ message: "Server error" });
+    console.error('❌ Error fetching jobs:', error);
+    res.status(500).json({ message: 'Error fetching jobs' });
   }
 };
