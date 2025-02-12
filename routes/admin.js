@@ -67,7 +67,7 @@ router.put('/batch/update/:id', protect(['Admin']), adminController.updateBatch)
 router.delete('/batch/delete/:id', protect(['Admin']), adminController.deleteBatch);
 //router.post('/create-lesson', protect(['Admin']), adminController.createLesson);
 
-router.get('/course/:courseId', protect(['Admin']), adminController.getCourseWithLessons);
+router.get('/course/:courseId', protect(['Admin','Mentor']), adminController.getCourseWithLessons);
 
 // Create a lesson
 router.post('/create-lesson', protect(['Admin']),adminController.createLesson);
