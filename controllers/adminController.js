@@ -1997,3 +1997,60 @@ exports.getAllCourses = async (req, res) => {
     });
   }
 };
+exports.pauseUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log(`📌 Admin requested to pause user: ${userId}`);
+
+    const user = await User.findById(userId);
+    if (!user) {
+      console.log("⚠️ User not found");
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    console.log(`🔍 Current User Status: ${user.status}`);
+
+    // ✅ Allow transition from "Disapproved" to "Active"
+    if (user.status === "Disapproved") {
+      user.status = "Active";
+    } else if (user.status === "Active") {
+      user.status = "Paused";
+    } else if (user.status === "Paused") {
+      user.status = "Active";
+    } else {
+      console.error(`❌ Invalid status detected: ${user.status}`);
+      return res.status(400).json({ message: "Invalid user status" });
+    }
+
+    console.log(`✅ Updated User Status: ${user.status}`);
+
+    await user.save();
+
+    res.status(200).json({ message: `User ${user.status} successfully`, user });
+  } catch (error) {
+    console.error("❌ Error pausing user:", error);
+    res.status(500).json({ message: "Error pausing user", error: error.message });
+  }
+};
+
+
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    console.log(`📌 Admin requested to delete user: ${userId}`);
+
+    const user = await User.findByIdAndDelete(userId);
+    if (!user) {
+      console.log("⚠️ User not found");
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    console.log(`🗑️ User ${userId} deleted successfully`);
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.error("❌ Error deleting user:", error);
+    res.status(500).json({ message: "Error deleting user", error: error.message });
+  }
+};
