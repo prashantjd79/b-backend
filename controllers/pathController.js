@@ -59,23 +59,43 @@ exports.createPath = async (req, res) => {
 
 
 
-// Get all Paths
 exports.getPaths = async (req, res) => {
   try {
-    const paths = await Path.find()
-      .populate('category', 'name')
-      .populate('courses.courseId', 'title')
-      .populate('courses.batches.batchId', 'name');
+    console.log("📌 Fetching Paths...");
 
+    const paths = await Path.find()
+      .populate({
+        path: "category",
+        select: "name",
+        strictPopulate: false, // Prevent errors if category is missing
+      })
+      .populate({
+        path: "courses.courseId",
+        select: "title",
+        strictPopulate: false,
+      })
+      .populate({
+        path: "courses.batches.batchId",
+        select: "name",
+        strictPopulate: false,
+      });
+
+    if (!paths || paths.length === 0) {
+      console.log("⚠️ No paths found.");
+      return res.status(404).json({ message: "No paths available" });
+    }
+
+    console.log("✅ Paths fetched successfully:", paths.length);
     res.status(200).json({
-      message: 'Paths fetched successfully',
+      message: "Paths fetched successfully",
       paths,
     });
   } catch (error) {
-    console.error('Error fetching paths:', error.message);
-    res.status(500).json({ error: 'Error fetching paths' });
+    console.error("❌ Error fetching paths:", error);
+    res.status(500).json({ error: "Error fetching paths", details: error.message });
   }
 };
+
 
 
 // Get a specific Path by ID
